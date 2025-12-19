@@ -3,18 +3,24 @@ import { useNavigate } from "react-router-dom";
 import { Lock, Mail, AlertCircle, ArrowLeft, Eye, EyeOff, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { supabaseAuth } from "@/lib/supabaseAuth";
-import authService from "@/lib/authService";
 import { useAuth } from "@/hooks/useAuth";
 import { theme } from "@/styles/theme";
 import { motion } from "framer-motion";
 import { useThemeStyles } from "@/hooks/useThemeStyles";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { z } from "zod";
+
+// Validation schema
+const authSchema = z.object({
+  email: z.string().email("Email invalide"),
+  password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères")
+});
 
 const AdminLogin = () => {
   const navigate = useNavigate();
   const themeStyles = useThemeStyles();
   const { t } = useLanguage();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, isAdmin } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -22,16 +28,38 @@ const AdminLogin = () => {
   const [error, setError] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated as admin
   useEffect(() => {
     if (user && !authLoading) {
-      navigate("/admin");
+      // Check if user has admin role before redirecting
+      supabaseAuth.hasRole('admin').then(hasAdminRole => {
+        if (hasAdminRole) {
+          navigate("/admin");
+        }
+      });
     }
   }, [user, authLoading, navigate]);
+
+  const validateInput = () => {
+    try {
+      authSchema.parse({ email, password });
+      return true;
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        setError(err.errors[0].message);
+      }
+      return false;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    
+    if (!validateInput()) {
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -39,34 +67,43 @@ const AdminLogin = () => {
         const { data, error } = await supabaseAuth.signUp(email, password);
         
         if (error) {
-          setError(error.message);
+          if (error.message.includes('already registered')) {
+            setError("Cet email est déjà enregistré. Essayez de vous connecter.");
+          } else {
+            setError(error.message);
+          }
           toast.error(error.message);
         } else if (data.user) {
-          toast.success("Compte créé avec succès! Vous pouvez maintenant vous connecter.");
+          toast.success("Compte créé! Contactez un administrateur pour obtenir les droits d'accès.");
           setIsSignUp(false);
           setPassword("");
         }
       } else {
         const { data, error } = await supabaseAuth.signIn(email, password);
 
-        if (data?.session && !error) {
-          toast.success("Connexion réussie!");
-          navigate("/admin");
-        } else {
-          // Fallback local (admin embarqué)
-          const localAuth = authService.login(email, password);
-          if (localAuth) {
+        if (error) {
+          if (error.message.includes('Invalid login')) {
+            setError("Email ou mot de passe incorrect");
+          } else {
+            setError(error.message);
+          }
+          toast.error("Erreur de connexion");
+        } else if (data?.session) {
+          // Check if user has admin role
+          const hasAdminRole = await supabaseAuth.hasRole('admin');
+          
+          if (hasAdminRole) {
             toast.success("Connexion réussie!");
             navigate("/admin");
           } else {
-            setError("Email ou mot de passe incorrect");
-            toast.error("Erreur de connexion");
+            setError("Vous n'avez pas les droits d'administrateur. Contactez un admin.");
+            toast.error("Accès refusé - droits insuffisants");
+            await supabaseAuth.signOut();
           }
         }
       }
     } catch (err) {
       setError("Une erreur est survenue");
-      console.error("Auth error:", err);
       toast.error("Une erreur est survenue");
     } finally {
       setIsLoading(false);
@@ -94,7 +131,7 @@ const AdminLogin = () => {
         />
       </div>
 
-      {/* Back button - absolute positioning */}
+      {/* Back button */}
       <motion.button
         onClick={() => navigate("/")}
         className="absolute top-8 left-8 flex items-center gap-2 px-4 py-2 rounded-lg transition-all z-50"
@@ -109,7 +146,7 @@ const AdminLogin = () => {
         <span className="text-sm font-medium">{t('common.back')}</span>
       </motion.button>
 
-      {/* Main content - Asymmetric layout */}
+      {/* Main content */}
       <motion.div
         className="relative z-10 max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center"
         initial={{ opacity: 0 }}
@@ -123,7 +160,6 @@ const AdminLogin = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
         >
-          {/* Floating cards */}
           <motion.div
             className="absolute top-0 left-0 w-32 h-32 rounded-2xl"
             style={{
@@ -133,7 +169,6 @@ const AdminLogin = () => {
             animate={{ y: [0, -20, 0] }}
             transition={{ duration: 4, repeat: Infinity }}
           />
-
           <motion.div
             className="absolute top-32 right-10 w-24 h-24 rounded-full"
             style={{
@@ -143,7 +178,6 @@ const AdminLogin = () => {
             animate={{ y: [0, 20, 0] }}
             transition={{ duration: 5, repeat: Infinity, delay: 0.5 }}
           />
-
           <motion.div
             className="absolute bottom-20 left-1/2 w-40 h-40 rounded-3xl"
             style={{
@@ -185,9 +219,6 @@ const AdminLogin = () => {
           <motion.h1
             className="text-4xl lg:text-5xl font-bold mb-4 leading-tight"
             style={{ color: themeStyles.text.primary }}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.8 }}
           >
             {t('admin.login')}
             <span
@@ -203,13 +234,9 @@ const AdminLogin = () => {
             </span>
           </motion.h1>
 
-          {/* Subtitle */}
           <motion.p
             className="text-lg mb-8"
             style={{ color: themeStyles.text.secondary }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6, duration: 0.8 }}
           >
             {t('admin.dashboard')}
           </motion.p>
@@ -222,12 +249,8 @@ const AdminLogin = () => {
               borderColor: themeStyles.card.border,
               boxShadow: themeStyles.shadows.soft
             }}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.8 }}
           >
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Error message */}
               {error && (
                 <motion.div
                   className="p-4 rounded-xl border flex items-start gap-3"
@@ -239,19 +262,12 @@ const AdminLogin = () => {
                   animate={{ opacity: 1, y: 0 }}
                 >
                   <AlertCircle size={20} style={{ color: '#FF4365' }} className="flex-shrink-0 mt-0.5" />
-                  <p style={{ color: '#FF4365' }} className="text-sm">
-                    {t('admin.error')}
-                  </p>
+                  <p style={{ color: '#FF4365' }} className="text-sm">{error}</p>
                 </motion.div>
               )}
 
               {/* Email field */}
-              <motion.div
-                className="space-y-2"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1, duration: 0.8 }}
-              >
+              <div className="space-y-2">
                 <label style={{ color: themeStyles.text.primary }} className="text-sm font-semibold block">
                   {t('admin.email')}
                 </label>
@@ -267,7 +283,8 @@ const AdminLogin = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="admin@okatech.fr"
                     disabled={isLoading}
-                    className="w-full pl-12 pr-4 py-3 rounded-xl border transition-all"
+                    required
+                    className="w-full pl-12 pr-4 py-3 rounded-xl border transition-all focus:outline-none focus:ring-2"
                     style={{
                       background: themeStyles.backgrounds.secondary,
                       borderColor: themeStyles.borders.medium,
@@ -275,15 +292,10 @@ const AdminLogin = () => {
                     }}
                   />
                 </div>
-              </motion.div>
+              </div>
 
               {/* Password field */}
-              <motion.div
-                className="space-y-2"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.1, duration: 0.8 }}
-              >
+              <div className="space-y-2">
                 <label style={{ color: themeStyles.text.primary }} className="text-sm font-semibold block">
                   {t('admin.password')}
                 </label>
@@ -299,7 +311,9 @@ const AdminLogin = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     disabled={isLoading}
-                    className="w-full pl-12 pr-12 py-3 rounded-xl border transition-all"
+                    required
+                    minLength={8}
+                    className="w-full pl-12 pr-12 py-3 rounded-xl border transition-all focus:outline-none focus:ring-2"
                     style={{
                       background: themeStyles.backgrounds.secondary,
                       borderColor: themeStyles.borders.medium,
@@ -309,13 +323,13 @@ const AdminLogin = () => {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 transition-all"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2"
                     style={{ color: theme.colors.primary.electric }}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
-              </motion.div>
+              </div>
 
               {/* Submit button */}
               <motion.button
@@ -326,20 +340,12 @@ const AdminLogin = () => {
                   background: `linear-gradient(135deg, ${theme.colors.primary.electric}, ${theme.colors.primary.purple})`,
                   boxShadow: `0 0 20px ${theme.colors.primary.electric}50`
                 }}
-                whileHover={{ scale: 1.02, boxShadow: `0 0 30px ${theme.colors.primary.electric}70` }}
+                whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.2, duration: 0.8 }}
               >
                 {isLoading || authLoading ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-transparent rounded-full animate-spin" 
-                      style={{
-                        borderTopColor: '#FFFFFF',
-                        borderRightColor: '#FFFFFF'
-                      }} 
-                    />
+                    <div className="w-4 h-4 border-2 border-transparent border-t-white border-r-white rounded-full animate-spin" />
                     {t('common.loading')}
                   </>
                 ) : (
@@ -351,7 +357,7 @@ const AdminLogin = () => {
               </motion.button>
 
               {/* Toggle Sign Up / Sign In */}
-              <motion.button
+              <button
                 type="button"
                 onClick={() => {
                   setIsSignUp(!isSignUp);
@@ -359,24 +365,19 @@ const AdminLogin = () => {
                 }}
                 className="w-full text-center text-sm transition-colors"
                 style={{ color: theme.colors.primary.electric }}
-                whileHover={{ scale: 1.02 }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.3, duration: 0.8 }}
               >
                 {isSignUp 
                   ? "Vous avez déjà un compte? Se connecter" 
                   : "Pas encore de compte? Créer un compte"}
-              </motion.button>
+              </button>
             </form>
 
-            {/* Footer */}
             <div className="mt-6 pt-6 border-t" style={{ borderColor: themeStyles.borders.light }}>
               <p className="text-xs text-center" style={{ color: themeStyles.text.muted }}>
-                Cette page est réservée aux administrateurs OKA Tech
+                Accès réservé aux administrateurs OKA Tech
               </p>
               <p className="text-xs text-center mt-2" style={{ color: themeStyles.text.muted }}>
-                Pour toute assistance: support@okatech.fr
+                Après inscription, un admin doit vous attribuer le rôle admin.
               </p>
             </div>
           </motion.div>
