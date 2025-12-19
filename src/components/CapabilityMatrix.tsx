@@ -131,7 +131,7 @@ export const CapabilityMatrix = () => {
               fontFamily: theme.fonts.body,
             }}
           >
-            9 core competencies that power OKA Tech's solutions
+            9 core competencies that power NTSAGUI Digital's solutions
           </motion.p>
         </div>
 

@@ -135,7 +135,7 @@ export const LiveCodeDemo = () => {
               fontFamily: theme.fonts.body,
             }}
           >
-            Interactive examples showcasing OKA Tech's technical capabilities
+            Interactive examples showcasing NTSAGUI Digital's technical capabilities
           </motion.p>
         </div>
 
