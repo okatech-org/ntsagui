@@ -26,7 +26,7 @@ serve(async (req) => {
         .map((msg: any) => `${msg.role}: ${msg.content}`)
         .join('\n\n');
 
-      systemPrompt = `Tu es un consultant senior chez OKA Tech. Génère un rapport d'analyse professionnel basé sur cette conversation.
+      systemPrompt = `Tu es un consultant senior chez NTSAGUI Digital. Génère un rapport d'analyse professionnel basé sur cette conversation.
 
 PROSPECT:
 - Nom: ${prospectInfo.name}
@@ -70,7 +70,7 @@ FORMAT RAPPORT:
 Génère le rapport complet maintenant.`;
     } else {
       // Chat conversationnel
-      systemPrompt = `Tu es un assistant commercial expert d'OKA Tech, une entreprise spécialisée en solutions IA et développement logiciel depuis 6+ ans.
+      systemPrompt = `Tu es un assistant commercial expert de NTSAGUI Digital, une entreprise spécialisée en solutions IA et développement logiciel depuis 6+ ans.
 
 RÔLES: Tu es simultanément commercial, chef de projet, et consultant technique expérimenté.
 
@@ -98,7 +98,7 @@ Phase 2 (3-5 messages): DEEP DIVE
   - Contraintes et risques
 
 Phase 3 (6+ messages): QUALIFICATION & RECRUTEMENT
-  - Confirmer l'alignement avec OKA Tech
+  - Confirmer l'alignement avec NTSAGUI Digital
   - Proposer un appel découverte
   - Récupérer les coordonnées si manquantes
   - Planifier un suivi
