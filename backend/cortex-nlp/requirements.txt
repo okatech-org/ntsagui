@@ -1,0 +1,23 @@
+# Cortex NLP - NEOCORTEX Linguistic Processing
+
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.5.0
+
+# Kafka
+aiokafka>=0.10.0
+
+# Redis
+redis>=5.0.0
+
+# HTTP Client for LLM
+httpx>=0.26.0
+
+# Observability
+prometheus-client>=0.19.0
+opentelemetry-api>=1.22.0
+opentelemetry-sdk>=1.22.0
+opentelemetry-instrumentation-fastapi>=0.43b0
+
+# Utilities
+python-dotenv>=1.0.0

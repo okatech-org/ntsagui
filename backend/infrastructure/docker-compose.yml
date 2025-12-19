@@ -1,0 +1,236 @@
+# NEOCORTEX - Infrastructure Événementielle
+# Architecture Acteur-Organique avec Redpanda (Kafka-compatible)
+
+version: '3.8'
+
+services:
+  # ============================================
+  # MESSAGE BROKER - Redpanda (Kafka-compatible)
+  # ============================================
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.1.1
+    container_name: neocortex-redpanda
+    command:
+      - redpanda start
+      - --smp 1
+      - --memory 1G
+      - --reserve-memory 0M
+      - --overprovisioned
+      - --node-id 0
+      - --kafka-addr PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
+      - --advertise-kafka-addr PLAINTEXT://redpanda:29092,OUTSIDE://localhost:9092
+      - --pandaproxy-addr 0.0.0.0:8082
+      - --advertise-pandaproxy-addr localhost:8082
+    ports:
+      - "9092:9092" # Kafka API
+      - "8083:8081" # Schema Registry (mapped to 8083 to avoid conflict)
+      - "8082:8082" # REST Proxy
+      - "9644:9644" # Admin API
+    volumes:
+      - redpanda-data:/var/lib/redpanda/data
+    healthcheck:
+      test: [ "CMD", "rpk", "cluster", "health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - neocortex-network
+
+  # Redpanda Console (UI)
+  redpanda-console:
+    image: docker.redpanda.com/redpandadata/console:v2.4.5
+    container_name: neocortex-console
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    ports:
+      - "8880:8080" # Changed from 8080 to avoid conflict
+    environment:
+      KAFKA_BROKERS: redpanda:29092
+      KAFKA_SCHEMAREGISTRY_ENABLED: "true"
+      KAFKA_SCHEMAREGISTRY_URLS: http://redpanda:8081
+    networks:
+      - neocortex-network
+
+  # Topic Initializer
+  init-topics:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.1.1
+    container_name: neocortex-init-topics
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    entrypoint: [ "/bin/bash", "-c" ]
+    command:
+      - |
+        echo "Creating NEOCORTEX topics..."
+
+        # Signaux d'entrée (Cortex Sensoriel)
+        rpk topic create signals.input.chat --brokers redpanda:29092 -p 3 -r 1
+        rpk topic create signals.input.webhook --brokers redpanda:29092 -p 3 -r 1
+
+        # Signaux d'intelligence (Cortex NLP)
+        rpk topic create signals.intelligence --brokers redpanda:29092 -p 3 -r 1
+
+        # Signaux de qualification
+        rpk topic create signals.qualification --brokers redpanda:29092 -p 3 -r 1
+
+        # Signaux d'actions (Cortex Préfrontal)
+        rpk topic create signals.actions --brokers redpanda:29092 -p 3 -r 1
+
+        # Signaux de sortie
+        rpk topic create signals.output.chat --brokers redpanda:29092 -p 3 -r 1
+        rpk topic create signals.output.notifications --brokers redpanda:29092 -p 3 -r 1
+
+        # Signaux d'erreurs et métriques
+        rpk topic create signals.errors --brokers redpanda:29092 -p 1 -r 1
+        rpk topic create signals.metrics --brokers redpanda:29092 -p 1 -r 1
+
+        echo "Topics created successfully!"
+        rpk topic list --brokers redpanda:29092
+    networks:
+      - neocortex-network
+
+  # ============================================
+  # CACHE - Redis (Mémoire Court Terme)
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: neocortex-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - neocortex-network
+
+  # ============================================
+  # CORTICES - Services Acteur-Organique
+  # ============================================
+
+  # Cortex Sensoriel - Gateway d'Ingestion
+  cortex-sensoriel:
+    build:
+      context: ../cortex-sensoriel
+      dockerfile: Dockerfile
+    container_name: neocortex-cortex-sensoriel
+    ports:
+      - "8000:8000"
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:29092
+      REDIS_URL: redis://redis:6379
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+      OTEL_SERVICE_NAME: cortex-sensoriel
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - neocortex-network
+
+  # Cortex NLP - Traitement Linguistique
+  cortex-nlp:
+    build:
+      context: ../cortex-nlp
+      dockerfile: Dockerfile
+    container_name: neocortex-cortex-nlp
+    ports:
+      - "8001:8001"
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:29092
+      REDIS_URL: redis://redis:6379
+      LLM_API_URL: https://ai.gateway.lovable.dev/v1/chat/completions
+      LLM_API_KEY: ${LOVABLE_API_KEY:-}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+      OTEL_SERVICE_NAME: cortex-nlp
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      cortex-sensoriel:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8001/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - neocortex-network
+
+  # ============================================
+  # OBSERVABILITÉ
+  # ============================================
+
+  # Prometheus - Métriques
+  prometheus:
+    image: prom/prometheus:v2.50.1
+    container_name: neocortex-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    networks:
+      - neocortex-network
+
+  # Grafana - Dashboards
+  grafana:
+    image: grafana/grafana:10.4.1
+    container_name: neocortex-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - neocortex-network
+
+  # Jaeger - Tracing Distribué
+  jaeger:
+    image: jaegertracing/all-in-one:1.55
+    container_name: neocortex-jaeger
+    ports:
+      - "16686:16686" # UI
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+      - "14268:14268" # Jaeger HTTP
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    networks:
+      - neocortex-network
+
+# ============================================
+# VOLUMES & NETWORKS
+# ============================================
+volumes:
+  redpanda-data:
+  redis-data:
+  prometheus-data:
+  grafana-data:
+
+
+networks:
+  neocortex-network:
+    driver: bridge

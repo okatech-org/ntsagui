@@ -1,0 +1,101 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://ntsagui.com/schemas/signal-pondere.json",
+    "title": "SignalPondere",
+    "description": "Unité de communication inter-cortex dans l'architecture Acteur-Organique NEOCORTEX",
+    "type": "object",
+    "required": [
+        "id",
+        "type",
+        "source",
+        "timestamp",
+        "payload",
+        "confiance",
+        "correlation_id"
+    ],
+    "properties": {
+        "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identifiant unique du signal"
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "LEAD_MESSAGE_RECEIVED",
+                "LEAD_INTENT_DETECTED",
+                "LEAD_QUALIFIED",
+                "REPORT_REQUESTED",
+                "REPORT_GENERATED",
+                "ASSISTANT_RESPONSE",
+                "DECISION_GENERATE_REPORT",
+                "DECISION_NOTIFY_ADMIN",
+                "ERROR_INGESTION_FAILED",
+                "ERROR_PROCESSING_FAILED"
+            ],
+            "description": "Type de signal"
+        },
+        "source": {
+            "type": "string",
+            "enum": [
+                "cortex-sensoriel",
+                "cortex-nlp",
+                "cortex-qualification",
+                "cortex-billing",
+                "cortex-prefrontal"
+            ],
+            "description": "Cortex émetteur du signal"
+        },
+        "timestamp": {
+            "type": "integer",
+            "description": "Horodatage Unix en millisecondes"
+        },
+        "payload": {
+            "type": "object",
+            "description": "Données métier du signal"
+        },
+        "confiance": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Niveau de confiance/intensité du signal (0.0 à 1.0)"
+        },
+        "ttl": {
+            "type": "integer",
+            "default": 60000,
+            "description": "Durée de vie du signal en millisecondes"
+        },
+        "correlation_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID de corrélation pour traçabilité distribuée"
+        },
+        "metadata": {
+            "type": "object",
+            "properties": {
+                "version": {
+                    "type": "string",
+                    "default": "1.0.0"
+                },
+                "priority": {
+                    "type": "string",
+                    "enum": [
+                        "LOW",
+                        "NORMAL",
+                        "HIGH",
+                        "CRITICAL"
+                    ],
+                    "default": "NORMAL"
+                },
+                "traceId": {
+                    "type": "string",
+                    "description": "OpenTelemetry trace ID"
+                },
+                "spanId": {
+                    "type": "string",
+                    "description": "OpenTelemetry span ID"
+                }
+            }
+        }
+    }
+}

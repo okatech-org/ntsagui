@@ -1,0 +1,33 @@
+# Prometheus Configuration - NEOCORTEX
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+rule_files: []
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Redpanda metrics
+  - job_name: 'redpanda'
+    static_configs:
+      - targets: ['redpanda:9644']
+
+  # Cortex services (à ajouter dynamiquement)
+  - job_name: 'cortex-sensoriel'
+    static_configs:
+      - targets: ['cortex-sensoriel:8000']
+    metrics_path: /metrics
+
+  - job_name: 'cortex-nlp'
+    static_configs:
+      - targets: ['cortex-nlp:8001']
+    metrics_path: /metrics

@@ -54,10 +54,10 @@ const Admin = () => {
     loadLeads();
   }, []);
 
-  const loadLeads = () => {
+  const loadLeads = async () => {
     // Initialiser les données de démo si aucun lead existe
     const demoLeads = initializeDemoData();
-    const allLeads = leadStorage.getAllLeads();
+    const allLeads = await leadStorage.getAllLeads();
     setLeads(allLeads.length > 0 ? allLeads : demoLeads);
   };
 
@@ -69,10 +69,10 @@ const Admin = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const handleDeleteLead = (id: string) => {
+  const handleDeleteLead = async (id: string) => {
     if (window.confirm(t('admin.leadManagement.deleteConfirm'))) {
-      leadStorage.deleteLead(id);
-      loadLeads();
+      await leadStorage.deleteLead(id);
+      await loadLeads();
       toast.success(t('admin.leadManagement.leadDeleted'));
     }
   };
@@ -92,9 +92,9 @@ const Admin = () => {
     toast.success(t('admin.leadManagement.csvExported'));
   };
 
-  const handleUpdateStatus = (id: string, newStatus: string) => {
-    leadStorage.updateLead(id, { status: newStatus as any });
-    loadLeads();
+  const handleUpdateStatus = async (id: string, newStatus: string) => {
+    await leadStorage.updateLead(id, { status: newStatus as any });
+    await loadLeads();
     toast.success(t('admin.leadManagement.statusUpdated'));
   };
 

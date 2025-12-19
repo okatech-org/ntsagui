@@ -16,6 +16,9 @@ import Contact from "./pages/Contact";
 import Documentation from "./pages/Documentation";
 import Blog from "./pages/Blog";
 import FAQ from "./pages/FAQ";
+import Pricing from "./pages/Pricing";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 import AdminLogin from "./pages/AdminLogin";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
@@ -33,15 +36,19 @@ const App = () => (
             <Routes>
               {/* Admin Routes (without Navigation/Footer) */}
               <Route path="/admin-login" element={<AdminLogin />} />
-              <Route 
-                path="/admin" 
+              <Route
+                path="/admin"
                 element={
                   <ProtectedRoute>
                     <Admin />
                   </ProtectedRoute>
-                } 
+                }
               />
-              
+
+              {/* Public Auth Routes (without Navigation/Footer) */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+
               {/* Public Routes (with Navigation/Footer) */}
               <Route path="/*" element={
                 <div className="flex flex-col min-h-screen">
@@ -51,6 +58,7 @@ const App = () => (
                       <Route path="/" element={<Home />} />
                       <Route path="/about" element={<About />} />
                       <Route path="/solutions" element={<Solutions />} />
+                      <Route path="/pricing" element={<Pricing />} />
                       <Route path="/contact" element={<Contact />} />
                       <Route path="/documentation" element={<Documentation />} />
                       <Route path="/blog" element={<Blog />} />

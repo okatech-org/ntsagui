@@ -136,7 +136,7 @@ const AIChatbot = ({ prospectInfo, onClose, onReportGenerated }: AIChatbotProps)
       const scoreMatch = report.match(/Score:\s*(\d+)\/100/i);
       const fitScore = scoreMatch ? parseInt(scoreMatch[1]) : Math.floor(Math.random() * 30) + 70;
 
-      const lead = leadStorage.saveLead({
+      const lead = await leadStorage.saveLead({
         name: prospectInfo.name,
         email: prospectInfo.email,
         company: prospectInfo.company,
@@ -190,8 +190,8 @@ const AIChatbot = ({ prospectInfo, onClose, onReportGenerated }: AIChatbotProps)
           >
             <div
               className={`max-w-[80%] rounded-lg p-3 ${msg.role === "user"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-foreground"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-foreground"
                 }`}
             >
               <p className="text-sm whitespace-pre-wrap">{msg.content}</p>

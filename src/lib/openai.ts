@@ -1,6 +1,51 @@
+import neocortexClient, {
+  NEOCORTEX_ENABLED,
+  generateSessionId,
+  type ChatMessage as NeocortexMessage,
+  type SignalMessage
+} from './neocortexClient';
+
 interface Message {
   role: 'system' | 'user' | 'assistant';
   content: string;
+}
+
+// État pour les réponses NEOCORTEX en attente
+const pendingResponses: Map<string, {
+  resolve: (response: string) => void;
+  reject: (error: Error) => void;
+}> = new Map();
+
+// Gestionnaire de messages WebSocket NEOCORTEX
+let wsInitialized = false;
+
+function initNeocortexWebSocket() {
+  if (wsInitialized || !NEOCORTEX_ENABLED) return;
+
+  const sessionId = generateSessionId();
+
+  neocortexClient.connectWebSocket(sessionId).then(() => {
+    neocortexClient.onMessage((message: SignalMessage) => {
+      if (message.type === 'ASSISTANT_RESPONSE' && message.payload?.response) {
+        // Résoudre la promesse en attente
+        const correlationId = message.payload.session_id || sessionId;
+        const pending = pendingResponses.get(correlationId);
+        if (pending) {
+          pending.resolve(message.payload.response);
+          pendingResponses.delete(correlationId);
+        }
+      } else if (message.type === 'error') {
+        // Gérer les erreurs
+        const sessionId = generateSessionId();
+        const pending = pendingResponses.get(sessionId);
+        if (pending) {
+          pending.reject(new Error(message.error || 'Unknown error'));
+          pendingResponses.delete(sessionId);
+        }
+      }
+    });
+    wsInitialized = true;
+  }).catch(console.error);
 }
 
 class AIService {
@@ -80,12 +125,93 @@ class AIService {
     conversationHistory: Message[],
     prospectInfo: any
   ): Promise<string> {
+    // Mode NEOCORTEX: Utilise le pipeline Kafka via Cortex Sensoriel
+    if (NEOCORTEX_ENABLED) {
+      return this.generateViaNeocortex(userMessage, conversationHistory, prospectInfo);
+    }
+
+    // Mode Legacy: Appel direct à Supabase Edge Function
     const messages: Message[] = [
       ...conversationHistory,
       { role: 'user', content: userMessage }
     ];
 
     return this.chat(messages, prospectInfo, 'chat');
+  }
+
+  /**
+   * Génère une réponse via le pipeline NEOCORTEX
+   * Envoie le message au Cortex Sensoriel qui le route vers Cortex NLP via Kafka
+   */
+  private async generateViaNeocortex(
+    userMessage: string,
+    conversationHistory: Message[],
+    prospectInfo: any
+  ): Promise<string> {
+    // Initialiser WebSocket si pas encore fait
+    initNeocortexWebSocket();
+
+    const sessionId = generateSessionId();
+
+    // Convertir l'historique au format NEOCORTEX
+    const history: NeocortexMessage[] = conversationHistory.map(m => ({
+      role: m.role,
+      content: m.content
+    }));
+
+    // Envoyer le message au Cortex Sensoriel
+    try {
+      const response = await neocortexClient.sendMessage({
+        session_id: sessionId,
+        message: userMessage,
+        prospect_info: {
+          name: prospectInfo.name || '',
+          email: prospectInfo.email || '',
+          company: prospectInfo.company || '',
+          phone: prospectInfo.phone
+        },
+        conversation_history: history,
+        language: this.detectLanguage(userMessage) === 'FR' ? 'fr' : 'en'
+      });
+
+      if (response.status !== 'accepted') {
+        throw new Error(response.error || 'Message rejected');
+      }
+
+      // Attendre la réponse via WebSocket (avec timeout)
+      return new Promise<string>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          pendingResponses.delete(sessionId);
+          // Fallback vers l'ancien système en cas de timeout
+          console.warn('NEOCORTEX timeout, falling back to legacy');
+          const messages: Message[] = [
+            ...conversationHistory,
+            { role: 'user', content: userMessage }
+          ];
+          this.chat(messages, prospectInfo, 'chat').then(resolve).catch(reject);
+        }, 30000); // 30 secondes timeout
+
+        pendingResponses.set(sessionId, {
+          resolve: (response: string) => {
+            clearTimeout(timeout);
+            resolve(response);
+          },
+          reject: (error: Error) => {
+            clearTimeout(timeout);
+            reject(error);
+          }
+        });
+      });
+
+    } catch (error) {
+      console.error('NEOCORTEX error, falling back to legacy:', error);
+      // Fallback vers l'ancien système
+      const messages: Message[] = [
+        ...conversationHistory,
+        { role: 'user', content: userMessage }
+      ];
+      return this.chat(messages, prospectInfo, 'chat');
+    }
   }
 
   async generateReport(conversation: any[], prospectInfo: any): Promise<string> {
@@ -126,11 +252,11 @@ class AIService {
   private detectLanguage(text: string): string {
     const frenchWords = ['je', 'vous', 'merci', 'oui', 'non', 'français', 'bonjour', 'problème'];
     const englishWords = ['i', 'you', 'thank', 'yes', 'no', 'english', 'hello', 'problem'];
-    
+
     const lowerText = text.toLowerCase();
     const frenchCount = frenchWords.filter(word => lowerText.includes(word)).length;
     const englishCount = englishWords.filter(word => lowerText.includes(word)).length;
-    
+
     return frenchCount > englishCount ? 'FR' : 'EN';
   }
 
