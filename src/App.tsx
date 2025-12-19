@@ -13,6 +13,9 @@ import Home from "./pages/Home";
 import About from "./pages/About";
 import Solutions from "./pages/Solutions";
 import Contact from "./pages/Contact";
+import Documentation from "./pages/Documentation";
+import Blog from "./pages/Blog";
+import FAQ from "./pages/FAQ";
 import AdminLogin from "./pages/AdminLogin";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
@@ -49,6 +52,9 @@ const App = () => (
                       <Route path="/about" element={<About />} />
                       <Route path="/solutions" element={<Solutions />} />
                       <Route path="/contact" element={<Contact />} />
+                      <Route path="/documentation" element={<Documentation />} />
+                      <Route path="/blog" element={<Blog />} />
+                      <Route path="/faq" element={<FAQ />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </main>

@@ -53,10 +53,10 @@ const Footer = () => {
     {
       title: t('footer.resources'),
       links: [
-        { label: t('footer.documentation') },
-        { label: t('footer.blog') },
-        { label: t('footer.faq') },
-        { label: t('footer.support') },
+        { label: t('footer.documentation'), path: "/documentation" },
+        { label: t('footer.blog'), path: "/blog" },
+        { label: t('footer.faq'), path: "/faq" },
+        { label: t('footer.support'), path: "/contact" },
       ],
     },
   ];
