@@ -11,8 +11,9 @@ import {
   X
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import authService from "@/lib/authService";
+import { supabaseAuth } from "@/lib/supabaseAuth";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 interface AdminDropdownProps {
   isDarkMode: boolean;
@@ -41,8 +42,8 @@ export const AdminDropdown = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleLogout = () => {
-    authService.logout();
+  const handleLogout = async () => {
+    await supabaseAuth.signOut();
     setIsOpen(false);
     navigate("/admin-login");
   };
