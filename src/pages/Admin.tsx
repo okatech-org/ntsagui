@@ -21,7 +21,8 @@ import {
   Filter,
   MoreVertical,
   Bell,
-  Settings
+  Settings,
+  Receipt
 } from "lucide-react";
 import leadStorage, { Lead } from "@/lib/leadStorage";
 import pdfGenerator from "@/lib/pdfGenerator";
@@ -35,6 +36,7 @@ import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import SettingsPanel from "@/components/SettingsPanel";
 import AdminDropdown from "@/components/AdminDropdown";
 import UserManagement from "@/components/UserManagement";
+import { BillingSystem } from "@/components/billing/BillingSystem";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const Admin = () => {
@@ -46,7 +48,7 @@ const Admin = () => {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState("week");
-  const [activeTab, setActiveTab] = useState<"overview" | "leads" | "users" | "analytics" | "settings">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "leads" | "users" | "billing" | "analytics" | "settings">("overview");
 
   useEffect(() => {
     loadLeads();
@@ -174,6 +176,7 @@ const Admin = () => {
               { id: 'overview' as const, icon: Activity, label: t('admin.menu.overview'), count: null },
               { id: 'leads' as const, icon: Target, label: t('admin.menu.leads'), count: stats.total },
               { id: 'users' as const, icon: Users, label: 'Utilisateurs', count: null },
+              { id: 'billing' as const, icon: Receipt, label: 'Facturation', count: null },
               { id: 'analytics' as const, icon: TrendingUp, label: t('admin.menu.analytics'), count: null },
               { id: 'settings' as const, icon: Settings, label: t('admin.menu.settings'), count: null },
             ].map((item) => (
@@ -758,6 +761,11 @@ const Admin = () => {
               currentColors={currentColors}
               isDarkMode={isDarkMode}
             />
+          )}
+
+          {/* BILLING TAB */}
+          {activeTab === 'billing' && (
+            <BillingSystem />
           )}
 
           {/* ANALYTICS TAB */}
