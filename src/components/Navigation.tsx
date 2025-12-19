@@ -119,7 +119,7 @@ const Navigation = () => {
                 className="text-xl font-bold hidden sm:inline-block"
                 style={{ color: isDark ? theme.colors.text.primary : '#1A1A1A' }}
               >
-                OKA Tech
+                NTSAGUI Digital
               </span>
           </Link>
           </motion.div>

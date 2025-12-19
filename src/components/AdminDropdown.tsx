@@ -83,8 +83,8 @@ export const AdminDropdown = ({
   ];
 
   const profileInfo = [
-    { icon: User, label: "Nom", value: "Administrateur OKA Tech" },
-    { icon: Mail, label: "Email", value: "admin@okatech.fr" },
+    { icon: User, label: "Nom", value: "Administrateur NTSAGUI Digital" },
+    { icon: Mail, label: "Email", value: "contact@ntsagui.com" },
     { icon: Shield, label: "Rôle", value: "Administrateur" },
     { icon: Calendar, label: "Depuis", value: "1er Janvier 2025" }
   ];
@@ -268,10 +268,10 @@ export const AdminDropdown = ({
                     A
                   </div>
                   <h2 className="text-xl font-bold mb-1" style={{ color: currentColors.textPrimary }}>
-                    Administrateur OKA Tech
+                    Administrateur NTSAGUI Digital
                   </h2>
                   <p className="text-sm" style={{ color: currentColors.textMuted }}>
-                    admin@okatech.fr
+                    contact@ntsagui.com
                   </p>
                 </div>
 

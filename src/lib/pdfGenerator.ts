@@ -25,7 +25,7 @@ class PDFGeneratorService {
     
     const html = `
       <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #3b82f6; padding-bottom: 20px;">
-        <h1 style="color: #3b82f6; margin: 0; font-size: 32px;">OKA Tech</h1>
+        <h1 style="color: #3b82f6; margin: 0; font-size: 32px;">NTSAGUI Digital</h1>
         <p style="margin: 5px 0; color: #666;">AI Solutions That Drive Results</p>
         <h2 style="margin: 15px 0 0 0; font-size: 20px;">Rapport d'Analyse Personnalisé</h2>
       </div>
@@ -69,7 +69,7 @@ class PDFGeneratorService {
           <div style="font-size: 48px; font-weight: bold; color: ${this.getScoreColor(lead.fitScore)};">
             ${lead.fitScore}/100
           </div>
-          <p style="margin: 10px 0 0 0; color: #666;">Niveau de compatibilité avec OKA Tech</p>
+          <p style="margin: 10px 0 0 0; color: #666;">Niveau de compatibilité avec NTSAGUI Digital</p>
         </div>
       </div>
 
@@ -86,8 +86,8 @@ class PDFGeneratorService {
       </div>
 
       <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #ddd; text-align: center; color: #666; font-size: 12px;">
-        <p>© 2024 OKA Tech - 50 Avenue des Champs Élysées, 75008 Paris</p>
-        <p>SIREN: 988 507 356 | Email: info@oka-tech.fr</p>
+        <p>© 2025 NTSAGUI Digital - Paris, France</p>
+        <p>Email: contact@ntsagui.com</p>
       </div>
     `;
     

@@ -153,7 +153,7 @@ export const SettingsPanel = ({
                   {t('admin.settings.fullName')}
                 </label>
                 <Input
-                  value="Administrateur OKA Tech"
+                  value="Administrateur NTSAGUI Digital"
                   disabled
                   className="rounded-lg"
                 />

@@ -181,7 +181,7 @@ const Admin = () => {
             </div>
             <div>
               <h1 className="font-bold text-lg" style={{ color: currentColors.textPrimary }}>
-                OKA Tech
+                NTSAGUI Digital
               </h1>
               <p className="text-xs" style={{ color: currentColors.textMuted }}>
                 {t('admin.adminDashboard')}

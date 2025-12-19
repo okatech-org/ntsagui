@@ -188,7 +188,7 @@ export const TechStackShowcase = () => {
               fontFamily: theme.fonts.body,
             }}
           >
-            Production-grade technologies powering OKA Tech solutions
+            Production-grade technologies powering NTSAGUI Digital solutions
           </motion.p>
           <motion.p
             variants={itemVariants}
@@ -247,7 +247,7 @@ export const TechStackShowcase = () => {
             scalable solutions. Our architecture supports horizontal scaling, 
             automatic failover, and zero-downtime deployments. With continuous 
             monitoring, advanced logging, and comprehensive error handling, 
-            OKA Tech ensures production reliability at enterprise scale.
+            NTSAGUI Digital ensures production reliability at enterprise scale.
           </p>
         </motion.div>
       </motion.div>

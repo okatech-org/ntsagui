@@ -104,7 +104,7 @@ const Footer = () => {
                 className="text-lg font-bold"
                 style={{ color: theme.colors.text.primary }}
               >
-                OKA Tech
+                NTSAGUI Digital
               </span>
             </Link>
             <p

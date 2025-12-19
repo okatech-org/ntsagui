@@ -171,7 +171,7 @@ export const PerformanceDashboard = () => {
               fontFamily: theme.fonts.body,
             }}
           >
-            Enterprise-grade performance benchmarks proving OKA Tech's technical excellence
+            Enterprise-grade performance benchmarks proving NTSAGUI Digital's technical excellence
           </motion.p>
         </div>
 
