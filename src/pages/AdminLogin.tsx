@@ -281,7 +281,7 @@ const AdminLogin = () => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@okatech.fr"
+                    placeholder="admin@ntsagui.com"
                     disabled={isLoading}
                     required
                     className="w-full pl-12 pr-4 py-3 rounded-xl border transition-all focus:outline-none focus:ring-2"
