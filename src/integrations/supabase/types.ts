@@ -55,6 +55,7 @@ export type Database = {
       }
       billing_documents: {
         Row: {
+          amount_paid: number | null
           client_id: string | null
           client_name: string
           created_at: string
@@ -63,6 +64,11 @@ export type Database = {
           items: Json
           notes: string | null
           number: string
+          payment_date: string | null
+          payment_due_date: string | null
+          payment_notes: string | null
+          payment_status: string | null
+          source_document_id: string | null
           status: string | null
           subtotal: number
           total: number
@@ -71,6 +77,7 @@ export type Database = {
           validity_days: number | null
         }
         Insert: {
+          amount_paid?: number | null
           client_id?: string | null
           client_name: string
           created_at?: string
@@ -79,6 +86,11 @@ export type Database = {
           items?: Json
           notes?: string | null
           number: string
+          payment_date?: string | null
+          payment_due_date?: string | null
+          payment_notes?: string | null
+          payment_status?: string | null
+          source_document_id?: string | null
           status?: string | null
           subtotal?: number
           total?: number
@@ -87,6 +99,7 @@ export type Database = {
           validity_days?: number | null
         }
         Update: {
+          amount_paid?: number | null
           client_id?: string | null
           client_name?: string
           created_at?: string
@@ -95,6 +108,11 @@ export type Database = {
           items?: Json
           notes?: string | null
           number?: string
+          payment_date?: string | null
+          payment_due_date?: string | null
+          payment_notes?: string | null
+          payment_status?: string | null
+          source_document_id?: string | null
           status?: string | null
           subtotal?: number
           total?: number
@@ -108,6 +126,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "billing_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_documents_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "billing_documents"
             referencedColumns: ["id"]
           },
         ]

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Package, FileText, DollarSign } from "lucide-react";
+import { Users, Package, FileText, DollarSign, AlertCircle, CheckCircle, Clock } from "lucide-react";
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('fr-FR', {
@@ -52,6 +52,10 @@ export function BillingDashboard() {
   const commandes = documents.filter(d => d.type === 'commande');
   const factures = documents.filter(d => d.type === 'facture');
   const totalFactures = factures.reduce((sum, f) => sum + Number(f.total || 0), 0);
+  const totalPaid = factures.reduce((sum, f) => sum + Number(f.amount_paid || 0), 0);
+  const pendingInvoices = factures.filter(f => f.payment_status === 'pending' || f.payment_status === 'partial');
+  const overdueInvoices = factures.filter(f => f.payment_status === 'overdue');
+  const paidInvoices = factures.filter(f => f.payment_status === 'paid');
 
   const stats = [
     { 
@@ -69,18 +73,39 @@ export function BillingDashboard() {
       gradient: "from-emerald-500 to-emerald-400"
     },
     { 
-      title: "Documents", 
-      value: documents.length, 
-      subtitle: `${devis.length} devis, ${commandes.length} commandes, ${factures.length} factures`,
-      icon: FileText,
-      gradient: "from-rose-500 to-rose-400"
-    },
-    { 
       title: "Chiffre d'affaires", 
       value: formatCurrency(totalFactures), 
-      subtitle: "Total des factures",
+      subtitle: `${formatCurrency(totalPaid)} encaissé`,
       icon: DollarSign,
       gradient: "from-violet-500 to-violet-400"
+    },
+    { 
+      title: "Solde à percevoir", 
+      value: formatCurrency(totalFactures - totalPaid), 
+      subtitle: `${pendingInvoices.length} factures en attente`,
+      icon: Clock,
+      gradient: "from-amber-500 to-amber-400"
+    },
+  ];
+
+  const paymentStats = [
+    { 
+      label: "Payées", 
+      count: paidInvoices.length, 
+      icon: CheckCircle, 
+      color: "text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-200" 
+    },
+    { 
+      label: "En attente", 
+      count: pendingInvoices.length, 
+      icon: Clock, 
+      color: "text-amber-600 bg-amber-100 dark:bg-amber-900 dark:text-amber-200" 
+    },
+    { 
+      label: "En retard", 
+      count: overdueInvoices.length, 
+      icon: AlertCircle, 
+      color: "text-red-600 bg-red-100 dark:bg-red-900 dark:text-red-200" 
     },
   ];
 
@@ -104,6 +129,29 @@ export function BillingDashboard() {
           </Card>
         ))}
       </div>
+
+      {/* Payment Status Summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-primary flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Suivi des paiements
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {paymentStats.map((stat, index) => (
+              <div key={index} className={`flex items-center gap-3 p-4 rounded-lg ${stat.color}`}>
+                <stat.icon className="h-8 w-8" />
+                <div>
+                  <div className="text-2xl font-bold">{stat.count}</div>
+                  <div className="text-sm">{stat.label}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
@@ -138,11 +186,23 @@ export function BillingDashboard() {
             ) : (
               <div className="space-y-3">
                 {documents.slice(0, 5).map(doc => (
-                  <div key={doc.id} className="p-3 border-b last:border-0">
-                    <strong className="text-foreground">{doc.type.toUpperCase()} #{doc.number}</strong>
-                    <p className="text-sm text-muted-foreground">
-                      {doc.client_name} • {formatCurrency(Number(doc.total))} • {new Date(doc.date).toLocaleDateString('fr-FR')}
-                    </p>
+                  <div key={doc.id} className="p-3 border-b last:border-0 flex justify-between items-center">
+                    <div>
+                      <strong className="text-foreground">{doc.type.toUpperCase()} #{doc.number}</strong>
+                      <p className="text-sm text-muted-foreground">
+                        {doc.client_name} • {formatCurrency(Number(doc.total))}
+                      </p>
+                    </div>
+                    {doc.type === 'facture' && (
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        doc.payment_status === 'paid' ? 'bg-green-100 text-green-800' :
+                        doc.payment_status === 'overdue' ? 'bg-red-100 text-red-800' :
+                        'bg-amber-100 text-amber-800'
+                      }`}>
+                        {doc.payment_status === 'paid' ? 'Payé' : 
+                         doc.payment_status === 'overdue' ? 'En retard' : 'En attente'}
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>
