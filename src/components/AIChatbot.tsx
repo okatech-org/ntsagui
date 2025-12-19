@@ -215,7 +215,7 @@ const AIChatbot = ({ prospectInfo, onClose, onReportGenerated }: AIChatbotProps)
             <div className="flex-1">
               <p className="text-sm font-medium text-blue-900">{t('chatbot.phoneRequired')}</p>
               <p className="text-xs text-blue-800 mt-1">
-                Un expert d'OKA Tech vous contactera rapidement
+                Un expert de NTSAGUI Digital vous contactera rapidement
               </p>
             </div>
           </div>

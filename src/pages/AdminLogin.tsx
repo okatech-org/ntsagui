@@ -230,7 +230,7 @@ const AdminLogin = () => {
                 backgroundClip: 'text'
               }}
             >
-              OKA Tech
+              NTSAGUI Digital
             </span>
           </motion.h1>
 
@@ -374,7 +374,7 @@ const AdminLogin = () => {
 
             <div className="mt-6 pt-6 border-t" style={{ borderColor: themeStyles.borders.light }}>
               <p className="text-xs text-center" style={{ color: themeStyles.text.muted }}>
-                Accès réservé aux administrateurs OKA Tech
+                Accès réservé aux administrateurs NTSAGUI Digital
               </p>
               <p className="text-xs text-center mt-2" style={{ color: themeStyles.text.muted }}>
                 Après inscription, un admin doit vous attribuer le rôle admin.

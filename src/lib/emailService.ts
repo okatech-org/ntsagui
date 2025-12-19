@@ -21,9 +21,9 @@ class EmailService {
 
     try {
       if (this.config.provider === 'sendgrid') {
-        return await this.sendViaSendGrid(lead.email, 'Votre rapport d\'analyse OKA Tech', emailContent);
+        return await this.sendViaSendGrid(lead.email, 'Votre rapport d\'analyse NTSAGUI Digital', emailContent);
       } else if (this.config.provider === 'mailgun') {
-        return await this.sendViaMailgun(lead.email, 'Votre rapport d\'analyse OKA Tech', emailContent);
+        return await this.sendViaMailgun(lead.email, 'Votre rapport d\'analyse NTSAGUI Digital', emailContent);
       } else {
         return await this.logEmail(lead.email, emailContent);
       }
@@ -132,7 +132,7 @@ class EmailService {
       <body>
         <div class="container">
           <div class="header">
-            <h1>OKA Tech - Rapport d'Analyse</h1>
+            <h1>NTSAGUI Digital - Rapport d'Analyse</h1>
             <p>Votre consultation personnalisée</p>
           </div>
 
@@ -145,7 +145,7 @@ class EmailService {
             <p>${lead.report.substring(0, 300)}...</p>
 
             <h3>Score de Compatibilité</h3>
-            <p><strong>${lead.fitScore}/100</strong> - Niveau de compatibilité avec OKA Tech</p>
+            <p><strong>${lead.fitScore}/100</strong> - Niveau de compatibilité avec NTSAGUI Digital</p>
 
             <p>Votre rapport complet est disponible en pièce jointe (PDF).</p>
 
@@ -155,8 +155,8 @@ class EmailService {
           </div>
 
           <div class="footer">
-            <p>OKA Tech - 50 Avenue des Champs Élysées, 75008 Paris</p>
-            <p>SIREN: 988 507 356 | Email: info@oka-tech.fr</p>
+            <p>NTSAGUI Digital - Paris, France</p>
+            <p>Email: contact@ntsagui.com</p>
           </div>
         </div>
       </body>
