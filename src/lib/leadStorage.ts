@@ -15,7 +15,7 @@ export interface Lead {
 }
 
 class LeadStorageService {
-  private storageKey = 'oka_tech_leads';
+  private storageKey = 'ntsagui_leads';
 
   getAllLeads(): Lead[] {
     try {

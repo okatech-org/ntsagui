@@ -36,7 +36,7 @@ export const generateDemoLeads = () => {
     const conversation = [
       {
         role: 'assistant' as const,
-        content: `Bonjour ${firstName}! Je suis l'assistant IA d'OKA Tech. Pouvez-vous me parler de votre entreprise et de vos défis actuels?`
+        content: `Bonjour ${firstName}! Je suis l'assistant IA de NTSAGUI Digital. Pouvez-vous me parler de votre entreprise et de vos défis actuels?`
       },
       {
         role: 'user' as const,
@@ -100,10 +100,10 @@ export const generateDemoLeads = () => {
 // Fonction pour initialiser les données de démo si aucun lead existe
 export const initializeDemoData = () => {
   try {
-    const existingLeads = JSON.parse(localStorage.getItem('oka_tech_leads') || '[]');
+    const existingLeads = JSON.parse(localStorage.getItem('ntsagui_leads') || '[]');
     if (existingLeads.length === 0) {
       const demoLeads = generateDemoLeads();
-      localStorage.setItem('oka_tech_leads', JSON.stringify(demoLeads));
+      localStorage.setItem('ntsagui_leads', JSON.stringify(demoLeads));
       console.log('Demo data initialized:', demoLeads.length, 'leads created');
       return demoLeads;
     }

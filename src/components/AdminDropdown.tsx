@@ -203,7 +203,7 @@ export const AdminDropdown = ({
                 }}
               >
                 <p>Version 1.0.0</p>
-                <p>© 2025 OKA Tech</p>
+                <p>© 2025 NTSAGUI Digital</p>
               </div>
             </motion.div>
           )}
@@ -405,7 +405,7 @@ export const AdminDropdown = ({
                   }}
                 >
                   <p className="mb-1">Version 1.0.0</p>
-                  <p>© 2025 OKA Tech</p>
+                  <p>© 2025 NTSAGUI Digital</p>
                 </div>
               </div>
             </motion.div>
