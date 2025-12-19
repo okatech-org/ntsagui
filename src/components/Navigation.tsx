@@ -7,7 +7,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { supabaseAuth } from "@/lib/supabaseAuth";
-import logoOkatech from "@/assets/logo-okatech.png";
+import logoNtsagui from "@/assets/logo-ntsagui.png";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -110,8 +110,8 @@ const Navigation = () => {
                 whileTap={{ scale: 0.95 }}
               >
                 <img 
-                  src={logoOkatech} 
-                  alt="OKA Tech Logo" 
+                  src={logoNtsagui} 
+                  alt="Logo" 
                   className="w-full h-full object-contain"
                 />
               </motion.div>
