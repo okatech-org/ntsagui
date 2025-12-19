@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { theme } from "@/styles/theme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useThemeStyles } from "@/hooks/useThemeStyles";
-import logoOkatech from "@/assets/logo-okatech.png";
+import logoNtsagui from "@/assets/logo-ntsagui.png";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -95,8 +95,8 @@ const Footer = () => {
                 whileHover={{ scale: 1.1 }}
               >
                 <img 
-                  src={logoOkatech} 
-                  alt="OKA Tech Logo" 
+                  src={logoNtsagui} 
+                  alt="Logo" 
                   className="w-full h-full object-contain"
                 />
               </motion.div>
