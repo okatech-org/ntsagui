@@ -34,6 +34,7 @@ import LeadManagementAdvanced from "@/components/LeadManagementAdvanced";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import SettingsPanel from "@/components/SettingsPanel";
 import AdminDropdown from "@/components/AdminDropdown";
+import UserManagement from "@/components/UserManagement";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const Admin = () => {
@@ -45,7 +46,7 @@ const Admin = () => {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState("week");
-  const [activeTab, setActiveTab] = useState<"overview" | "leads" | "analytics" | "settings">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "leads" | "users" | "analytics" | "settings">("overview");
 
   useEffect(() => {
     loadLeads();
@@ -110,50 +111,29 @@ const Admin = () => {
     avgScore: leads.length > 0 ? (leads.reduce((sum, l) => sum + l.fitScore, 0) / leads.length).toFixed(1) : 0,
   };
 
-  // DARK MODE: Vraies nuances de noir
-  const colors = {
-    dark: {
-      bg: '#000000',           // Noir pur
-      cardBg: '#0A0A0A',       // Noir légèrement gris
-      headerBg: '#111111',     // Noir avec nuance
-      hoverBg: '#1A1A1A',      // Noir pour hover
-      borderColor: '#2A2A2A',  // Gris très sombre
-      textPrimary: '#FFFFFF',  // Blanc pur
-      textSecondary: '#B0B0B0', // Gris clair
-      textMuted: '#666666',    // Gris moyen
-    },
-    light: {
-      bg: '#FAFAFA',           // Gris très clair
-      cardBg: '#FFFFFF',       // Blanc pur
-      headerBg: '#FFFFFF',     // Blanc
-      hoverBg: '#F5F5F5',      // Gris très clair pour hover
-      borderColor: '#E0E0E0',  // Gris clair
-      textPrimary: '#1A1A1A',  // Noir
-      textSecondary: '#666666', // Gris moyen
-      textMuted: '#999999',    // Gris plus clair
-    }
-  };
-
+  // Bleu professionnel - couleurs corporate
   const currentColors = isDarkMode
     ? {
-      bg: '#000000',
-      cardBg: '#0A0A0A',
-      headerBg: '#111111',
-      hoverBg: '#1A1A1A',
-      borderColor: '#2A2A2A',
-      textPrimary: '#FFFFFF',
-      textSecondary: '#B0B0B0',
-      textMuted: '#666666',
+      bg: '#0a1628',           // Bleu très sombre
+      cardBg: '#0f1f35',       // Bleu sombre
+      headerBg: '#0d1a2d',     // Bleu header
+      hoverBg: '#142942',      // Bleu hover
+      borderColor: '#1e3a5f',  // Bleu bordure
+      textPrimary: '#f0f6ff',  // Blanc bleuté
+      textSecondary: '#94a8c4', // Gris bleuté
+      textMuted: '#5a7394',    // Gris bleu moyen
+      accent: '#3b82f6',       // Bleu accent
     }
     : {
-      bg: '#FAFAFA',
-      cardBg: '#FFFFFF',
-      headerBg: '#FFFFFF',
-      hoverBg: '#F5F5F5',
-      borderColor: '#E0E0E0',
-      textPrimary: '#1A1A1A',
-      textSecondary: '#666666',
-      textMuted: '#999999',
+      bg: '#f8fafc',           // Gris bleuté très clair
+      cardBg: '#ffffff',       // Blanc pur
+      headerBg: '#ffffff',     // Blanc
+      hoverBg: '#f1f5f9',      // Gris bleuté clair
+      borderColor: '#e2e8f0',  // Gris bleuté bordure
+      textPrimary: '#0f172a',  // Bleu très sombre
+      textSecondary: '#475569', // Gris bleuté
+      textMuted: '#94a3b8',    // Gris bleu clair
+      accent: '#2563eb',       // Bleu accent
     };
 
   return (
@@ -175,9 +155,9 @@ const Admin = () => {
           <div className="flex items-center gap-3 mb-8">
             <div
               className="w-10 h-10 rounded-lg flex items-center justify-center"
-              style={{ background: '#00D9FF' }}
+              style={{ background: 'linear-gradient(135deg, #2563eb, #0ea5e9)' }}
             >
-              <span className="font-bold text-black">O</span>
+              <span className="font-bold text-white">N</span>
             </div>
             <div>
               <h1 className="font-bold text-lg" style={{ color: currentColors.textPrimary }}>
@@ -192,16 +172,17 @@ const Admin = () => {
           <nav className="space-y-2">
             {[
               { id: 'overview' as const, icon: Activity, label: t('admin.menu.overview'), count: null },
-              { id: 'leads' as const, icon: Users, label: t('admin.menu.leads'), count: stats.total },
-              { id: 'analytics' as const, icon: Target, label: t('admin.menu.analytics'), count: null },
+              { id: 'leads' as const, icon: Target, label: t('admin.menu.leads'), count: stats.total },
+              { id: 'users' as const, icon: Users, label: 'Utilisateurs', count: null },
+              { id: 'analytics' as const, icon: TrendingUp, label: t('admin.menu.analytics'), count: null },
               { id: 'settings' as const, icon: Settings, label: t('admin.menu.settings'), count: null },
             ].map((item) => (
               <div
                 key={item.id}
                 className="flex items-center justify-between px-4 py-3 rounded-lg cursor-pointer transition-all hover:bg-opacity-10"
                 style={{
-                  background: activeTab === item.id ? '#00D9FF15' : 'transparent',
-                  color: activeTab === item.id ? '#00D9FF' : currentColors.textSecondary
+                  background: activeTab === item.id ? 'rgba(37, 99, 235, 0.15)' : 'transparent',
+                  color: activeTab === item.id ? '#3b82f6' : currentColors.textSecondary
                 }}
                 onMouseEnter={(e) => {
                   if (activeTab !== item.id) {
@@ -223,8 +204,8 @@ const Admin = () => {
                   <div
                     className="px-2 py-1 rounded-full text-xs font-bold"
                     style={{
-                      background: '#00D9FF20',
-                      color: '#00D9FF'
+                      background: 'rgba(37, 99, 235, 0.2)',
+                      color: '#3b82f6'
                     }}
                   >
                     {item.count}
@@ -308,12 +289,12 @@ const Admin = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 {[
                   {
-                    icon: Users,
+                    icon: Target,
                     label: "Total Leads",
                     value: stats.total.toString(),
                     change: "+12%",
                     trend: "up",
-                    color: "#00D9FF"
+                    color: "#3b82f6"
                   },
                   {
                     icon: Target,
@@ -397,11 +378,7 @@ const Admin = () => {
                     <Button
                       onClick={handleExportCSV}
                       disabled={filteredLeads.length === 0}
-                      className="rounded-xl font-semibold"
-                      style={{
-                        background: '#00D9FF',
-                        color: '#000000'
-                      }}
+                      className="rounded-xl font-semibold bg-primary text-primary-foreground hover:bg-primary/90"
                     >
                       <Download className="w-4 h-4 mr-2" />
                       {t('admin.leadManagement.export')}
@@ -770,6 +747,14 @@ const Admin = () => {
             <LeadManagementAdvanced
               leads={leads}
               onLeadsUpdate={(updatedLeads) => setLeads(updatedLeads)}
+              currentColors={currentColors}
+              isDarkMode={isDarkMode}
+            />
+          )}
+
+          {/* USERS MANAGEMENT TAB */}
+          {activeTab === 'users' && (
+            <UserManagement
               currentColors={currentColors}
               isDarkMode={isDarkMode}
             />
