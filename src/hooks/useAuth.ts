@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { supabaseAuth, UserRole } from '@/lib/supabaseAuth';
-import authService from '@/lib/authService';
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -40,30 +39,6 @@ export const useAuth = () => {
         setTimeout(() => {
           supabaseAuth.getUserRoles().then(setRoles);
         }, 0);
-      } else {
-        // Fallback: vérifier la session locale admin
-        const local = authService.getCurrentUser();
-        if (local) {
-          // On expose un user minimal compatible (id/email) pour l'app
-          // sans forcer un objet Supabase complet
-          setUser({
-            id: local.id,
-            email: local.email,
-            user_metadata: { name: local.name, role: local.role },
-            app_metadata: {},
-            aud: 'authenticated',
-            created_at: local.createdAt,
-            factors: [],
-            identities: [],
-            role: 'authenticated',
-            confirmed_at: local.createdAt,
-            email_confirmed_at: local.createdAt,
-            phone_confirmed_at: null,
-            phone: '',
-            last_sign_in_at: local.createdAt
-          } as unknown as User);
-          setRoles(['admin']);
-        }
       }
       
       setIsLoading(false);
@@ -79,6 +54,13 @@ export const useAuth = () => {
   const isAdmin = hasRole('admin');
   const isModerator = hasRole('moderator');
 
+  const signOut = async () => {
+    await supabaseAuth.signOut();
+    setUser(null);
+    setSession(null);
+    setRoles([]);
+  };
+
   return {
     user,
     session,
@@ -87,6 +69,7 @@ export const useAuth = () => {
     roles,
     hasRole,
     isAdmin,
-    isModerator
+    isModerator,
+    signOut
   };
 };
