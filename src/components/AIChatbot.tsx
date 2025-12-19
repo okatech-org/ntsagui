@@ -2,14 +2,12 @@ import { useState, useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Bot, X, Send, Loader2, FileText, Download, Phone } from "lucide-react";
+import { Bot, X, Send, Loader2, FileText, Phone } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import leadStorage from "@/lib/leadStorage";
 import pdfGenerator from "@/lib/pdfGenerator";
 import { openAIService } from "@/lib/openai";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useThemeStyles } from "@/hooks/useThemeStyles";
 
 interface Message {
   role: "user" | "assistant";
@@ -29,8 +27,7 @@ interface AIChatbotProps {
 }
 
 const AIChatbot = ({ prospectInfo, onClose, onReportGenerated }: AIChatbotProps) => {
-  const { t, language } = useLanguage();
-  const themeStyles = useThemeStyles();
+  const { t } = useLanguage();
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -44,8 +41,6 @@ const AIChatbot = ({ prospectInfo, onClose, onReportGenerated }: AIChatbotProps)
   const [shouldCollectContact, setShouldCollectContact] = useState(false);
   const [collectedPhone, setCollectedPhone] = useState(prospectInfo.phone || "");
   const [reportGenerated, setReportGenerated] = useState(false);
-  const [conversationId, setConversationId] = useState<string | null>(null);
-  const [leadId, setLeadId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -68,175 +63,89 @@ const AIChatbot = ({ prospectInfo, onClose, onReportGenerated }: AIChatbotProps)
     const userMessage = input.trim();
     setInput("");
 
-    setMessages(prev => [...prev, {
+    const newUserMessage: Message = {
       role: "user",
       content: userMessage,
       timestamp: new Date(),
-    }]);
+    };
 
+    setMessages(prev => [...prev, newUserMessage]);
     setIsLoading(true);
 
-    // Ajouter un message assistant vide qu'on va remplir progressivement
-    setMessages(prev => [...prev, {
-      role: "assistant",
-      content: "",
-      timestamp: new Date(),
-    }]);
-
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
+      // Utiliser le service OpenAI local
+      const conversationHistory = messages.map(m => ({
+        role: m.role as 'user' | 'assistant' | 'system',
+        content: m.content
+      }));
+
+      const result = await openAIService.analyzeAndRespond(
+        userMessage,
+        conversationHistory,
         {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({
-            conversationId,
-            userMessage,
-            language,
-            prospectInfo: {
-              leadId,
-              name: prospectInfo.name,
-              email: prospectInfo.email,
-              company: prospectInfo.company,
-              phone: collectedPhone || prospectInfo.phone,
-            }
-          })
-        }
+          name: prospectInfo.name,
+          email: prospectInfo.email,
+          company: prospectInfo.company,
+          phone: collectedPhone || prospectInfo.phone,
+        },
+        messages.filter(m => m.role === 'user').length + 1
       );
 
-      if (!response.ok) {
-        if (response.status === 429) {
-          toast.error("Limite de requêtes atteinte, veuillez réessayer plus tard.");
-        } else if (response.status === 402) {
-          toast.error("Crédit insuffisant.");
-        } else {
-          throw new Error(`HTTP error ${response.status}`);
-        }
-        // Supprimer le message assistant vide
-        setMessages(prev => prev.slice(0, -1));
-        return;
-      }
+      const assistantMessage: Message = {
+        role: "assistant",
+        content: result.response,
+        timestamp: new Date(),
+      };
 
-      if (!response.body) throw new Error('No response body');
+      setMessages(prev => [...prev, assistantMessage]);
+      setShouldCollectContact(result.shouldCollectContact);
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let textBuffer = '';
-      let streamDone = false;
-      let assistantContent = '';
-      let metadata: any = null;
-
-      while (!streamDone) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        textBuffer += decoder.decode(value, { stream: true });
-
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
-
-          if (line.endsWith('\r')) line = line.slice(0, -1);
-          if (line.startsWith(':') || line.trim() === '') continue;
-          if (!line.startsWith('data: ')) continue;
-
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === '[DONE]') {
-            streamDone = true;
-            break;
-          }
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            
-            if (parsed.type === 'metadata') {
-              // Stocker les métadonnées
-              metadata = parsed;
-            } else if (parsed.content) {
-              // Mise à jour progressive du contenu
-              assistantContent += parsed.content;
-              setMessages(prev => {
-                const newMessages = [...prev];
-                newMessages[newMessages.length - 1] = {
-                  role: 'assistant',
-                  content: assistantContent,
-                  timestamp: new Date(),
-                };
-                return newMessages;
-              });
-            }
-          } catch (e) {
-            // Gérer les erreurs de parsing JSON
-            textBuffer = line + '\n' + textBuffer;
-            break;
-          }
-        }
-      }
-
-      // Traiter les métadonnées finales
-      if (metadata) {
-        if (metadata.conversationId && !conversationId) {
-          setConversationId(metadata.conversationId);
-        }
-        if (metadata.leadId && !leadId) {
-          setLeadId(metadata.leadId);
-        }
-        setShouldCollectContact(metadata.shouldCollectContact);
-
-        // Afficher le score du lead si présent
-        if (metadata.leadScore !== undefined) {
-          console.log('Lead Score:', metadata.leadScore);
-        }
-
-        // Si on doit collecter et qu'on a le téléphone, générer le rapport
-        if (metadata.shouldCollectContact && collectedPhone) {
-          setTimeout(() => {
-            generateReport();
-          }, 1000);
-        }
+      // Si on doit collecter et qu'on a le téléphone, générer le rapport
+      if (result.shouldCollectContact && collectedPhone) {
+        setTimeout(() => {
+          generateReport();
+        }, 1000);
       }
 
     } catch (error) {
       toast.error(t('chatbot.error'));
       console.error("Error:", error);
-      // Supprimer le message assistant vide en cas d'erreur
-      setMessages(prev => prev.slice(0, -1));
     } finally {
       setIsLoading(false);
     }
   };
 
   const generateReport = async () => {
-    if (!conversationId) {
-      toast.error(t('chatbot.error'));
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('generate-report', {
-        body: { conversationId }
+      // Utiliser le service OpenAI local pour générer le rapport
+      const conversation = messages.map(msg => ({
+        role: msg.role,
+        content: msg.content,
+      }));
+
+      const report = await openAIService.generateReport(conversation, {
+        name: prospectInfo.name,
+        email: prospectInfo.email,
+        company: prospectInfo.company,
+        phone: collectedPhone || prospectInfo.phone,
       });
 
-      if (error) throw error;
-
-      const fitScore = data.compatibilityScore || Math.floor(Math.random() * 30) + 70;
+      // Extraire le score du rapport
+      const scoreMatch = report.match(/Score:\s*(\d+)\/100/i);
+      const fitScore = scoreMatch ? parseInt(scoreMatch[1]) : Math.floor(Math.random() * 30) + 70;
 
       const lead = leadStorage.saveLead({
-        name: data.prospectInfo.name,
-        email: data.prospectInfo.email,
-        company: data.prospectInfo.company,
-        phone: collectedPhone || data.prospectInfo.phone,
+        name: prospectInfo.name,
+        email: prospectInfo.email,
+        company: prospectInfo.company,
+        phone: collectedPhone || prospectInfo.phone,
         conversation: messages.map(msg => ({
           role: msg.role as 'user' | 'assistant',
           content: msg.content,
         })),
-        report: data.report,
+        report: report,
         fitScore: fitScore,
         status: 'new',
       });
