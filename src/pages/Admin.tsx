@@ -27,7 +27,6 @@ import leadStorage, { Lead } from "@/lib/leadStorage";
 import pdfGenerator from "@/lib/pdfGenerator";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import authService from "@/lib/authService";
 import { supabaseAuth } from "@/lib/supabaseAuth";
 import { useNavigate } from "react-router-dom";
 import { initializeDemoData } from "@/lib/demoData";
@@ -97,10 +96,7 @@ const Admin = () => {
   };
 
   const handleLogout = async () => {
-    // Déconnecter Supabase si connecté
     await supabaseAuth.signOut();
-    // Nettoyer la session locale éventuelle
-    authService.logout();
     toast.success(t('admin.settings.logoutConfirm'));
     navigate("/admin-login");
   };
