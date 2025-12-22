@@ -433,12 +433,16 @@ export function DocumentCreator({ type }: DocumentCreatorProps) {
                 <div className="flex justify-end mb-6">
                   <div className="bg-muted p-4 rounded-lg min-w-[200px]">
                     <div className="flex justify-between py-1 border-b">
-                      <span>Sous-total:</span>
+                      <span>Sous-total HT:</span>
                       <span>{formatCurrency(calculateTotal())}</span>
                     </div>
+                    <div className="flex justify-between py-1 border-b">
+                      <span>TVA (18%):</span>
+                      <span>{formatCurrency(calculateTotal() * 0.18)}</span>
+                    </div>
                     <div className="flex justify-between py-2 font-bold text-primary text-lg border-t-2 border-primary mt-2">
-                      <span>TOTAL XAF:</span>
-                      <span>{formatCurrency(calculateTotal())}</span>
+                      <span>TOTAL TTC:</span>
+                      <span>{formatCurrency(calculateTotal() * 1.18)}</span>
                     </div>
                   </div>
                 </div>
