@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus, X, Pencil, Trash2 } from "lucide-react";
 
+import { Switch } from "@/components/ui/switch";
+
 interface ClientFormData {
   name: string;
   company: string;
@@ -20,6 +22,7 @@ interface ClientFormData {
   rccm: string;
   nif: string;
   contact_name: string;
+  tax_exempt: boolean;
 }
 
 const initialFormData: ClientFormData = {
@@ -32,7 +35,8 @@ const initialFormData: ClientFormData = {
   country: 'Gabon',
   rccm: '',
   nif: '',
-  contact_name: ''
+  contact_name: '',
+  tax_exempt: false
 };
 
 export function ClientsManager() {
@@ -108,7 +112,8 @@ export function ClientsManager() {
       country: client.country || 'Gabon',
       rccm: client.rccm || '',
       nif: client.nif || '',
-      contact_name: client.contact_name || ''
+      contact_name: client.contact_name || '',
+      tax_exempt: client.tax_exempt || false
     });
     setEditingId(client.id);
     setShowForm(true);
@@ -213,6 +218,14 @@ export function ClientsManager() {
                     onChange={e => setFormData({ ...formData, city: e.target.value })}
                   />
                 </div>
+                <div className="flex items-center gap-3 pt-6">
+                  <Switch
+                    id="tax_exempt"
+                    checked={formData.tax_exempt}
+                    onCheckedChange={checked => setFormData({ ...formData, tax_exempt: checked })}
+                  />
+                  <Label htmlFor="tax_exempt" className="cursor-pointer">Exonéré de TVA</Label>
+                </div>
               </div>
               <div className="flex gap-2">
                 <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
@@ -245,6 +258,7 @@ export function ClientsManager() {
                   <TableHead className="text-primary-foreground">NIF</TableHead>
                   <TableHead className="text-primary-foreground">Contact</TableHead>
                   <TableHead className="text-primary-foreground">Email</TableHead>
+                  <TableHead className="text-primary-foreground">TVA</TableHead>
                   <TableHead className="text-primary-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -256,6 +270,11 @@ export function ClientsManager() {
                     <TableCell className="text-xs font-mono">{(client as any).nif || '-'}</TableCell>
                     <TableCell className="text-sm">{(client as any).contact_name || '-'}</TableCell>
                     <TableCell>{client.email}</TableCell>
+                    <TableCell>
+                      <span className={`text-xs px-2 py-1 rounded ${(client as any).tax_exempt ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
+                        {(client as any).tax_exempt ? 'Exonéré' : '18%'}
+                      </span>
+                    </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Button size="sm" variant="outline" onClick={() => handleEdit(client)}>
