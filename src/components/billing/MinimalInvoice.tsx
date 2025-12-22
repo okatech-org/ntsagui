@@ -15,6 +15,7 @@ import logoNtsagui from "@/assets/logo-ntsagui.png";
 
 interface InvoiceItem {
   productId: string;
+  productName: string;
   quantity: number;
   unitPrice: number;
   description: string;
@@ -55,7 +56,7 @@ const formatCurrency = (amount: number, currency = 'USD') => {
 
 export function MinimalInvoice() {
   const [selectedClient, setSelectedClient] = useState('');
-  const [items, setItems] = useState<InvoiceItem[]>([{ productId: '', quantity: 1, unitPrice: 0, description: '', unit: 'unité' }]);
+  const [items, setItems] = useState<InvoiceItem[]>([{ productId: '', productName: '', quantity: 1, unitPrice: 0, description: '', unit: 'unité' }]);
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
   const [dueDate, setDueDate] = useState(new Date().toISOString().split('T')[0]);
@@ -136,7 +137,7 @@ export function MinimalInvoice() {
   });
 
   const addItem = () => {
-    setItems([...items, { productId: '', quantity: 1, unitPrice: 0, description: '', unit: 'unité' }]);
+    setItems([...items, { productId: '', productName: '', quantity: 1, unitPrice: 0, description: '', unit: 'unité' }]);
   };
 
   const removeItem = (index: number) => {
@@ -150,8 +151,9 @@ export function MinimalInvoice() {
     if (field === 'productId' && value) {
       const product = products.find(p => p.id === value);
       if (product) {
+        newItems[index].productName = product.name;
         newItems[index].unitPrice = Number(product.price);
-        newItems[index].description = product.description || product.name;
+        newItems[index].description = product.description || '';
         newItems[index].unit = product.unit || 'unité';
       }
     }
@@ -169,7 +171,7 @@ export function MinimalInvoice() {
 
   const resetForm = () => {
     setSelectedClient('');
-    setItems([{ productId: '', quantity: 1, unitPrice: 0, description: '', unit: 'unité' }]);
+    setItems([{ productId: '', productName: '', quantity: 1, unitPrice: 0, description: '', unit: 'unité' }]);
     setInvoiceNumber(generateInvoiceNumber());
     setIssueDate(new Date().toISOString().split('T')[0]);
     setDueDate(new Date().toISOString().split('T')[0]);
@@ -481,7 +483,10 @@ export function MinimalInvoice() {
                     {items.filter(item => item.productId).map((item, index) => (
                       <tr key={index} className="border-b border-gray-100">
                         <td className="py-3 text-gray-900 pr-2">
-                          <p className="whitespace-pre-wrap leading-snug">{item.description}</p>
+                          <p className="font-semibold">{item.productName}</p>
+                          {item.description && (
+                            <p className="whitespace-pre-wrap leading-snug text-gray-600 mt-1">{item.description}</p>
+                          )}
                         </td>
                         <td className="py-3 text-center text-gray-900">{item.quantity}</td>
                         <td className="py-3 text-center text-gray-900 capitalize">{item.unit}</td>
