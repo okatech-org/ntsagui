@@ -707,20 +707,20 @@ export function MinimalInvoice() {
                           <div style={{ width: '200px', backgroundColor: '#f8fafc', border: '1px solid #1e40af', borderRadius: '4px', overflow: 'hidden' }}>
                             <div style={{ padding: '6px 10px', borderBottom: '1px solid #e2e8f0' }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8pt' }}>
-                                <span style={{ color: '#64748b' }}>Sous-total:</span>
+                                <span style={{ color: '#64748b' }}>Sous-total HT:</span>
                                 <span style={{ color: '#1e293b' }}>{formatCurrency(calculateTotal(), currency)}</span>
                               </div>
                             </div>
                             <div style={{ padding: '6px 10px', borderBottom: '1px solid #e2e8f0' }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8pt' }}>
-                                <span style={{ color: '#64748b' }}>TVA (0%):</span>
-                                <span style={{ color: '#1e293b' }}>0,00</span>
+                                <span style={{ color: '#64748b' }}>TVA (18%):</span>
+                                <span style={{ color: '#1e293b' }}>{formatCurrency(calculateTotal() * 0.18, currency)}</span>
                               </div>
                             </div>
                             <div style={{ padding: '8px 10px', backgroundColor: '#1e40af' }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9pt' }}>
-                                <span style={{ color: 'white', fontWeight: 'bold' }}>TOTAL:</span>
-                                <span style={{ color: 'white', fontWeight: 'bold' }}>{formatCurrency(calculateTotal(), currency)}</span>
+                                <span style={{ color: 'white', fontWeight: 'bold' }}>TOTAL TTC:</span>
+                                <span style={{ color: 'white', fontWeight: 'bold' }}>{formatCurrency(calculateTotal() * 1.18, currency)}</span>
                               </div>
                             </div>
                           </div>
