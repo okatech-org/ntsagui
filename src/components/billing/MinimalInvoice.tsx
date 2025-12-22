@@ -372,60 +372,51 @@ export function MinimalInvoice() {
             <CardContent>
               <div 
                 ref={previewRef} 
-                className="bg-white text-gray-900 p-8 rounded-lg border"
+                className="bg-white text-gray-900 p-10 rounded-lg border"
                 style={{ minHeight: '700px', fontFamily: 'system-ui, -apple-system, sans-serif' }}
               >
-                {/* Header with Logo */}
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center gap-4">
-                    <img src={logoNtsagui} alt="NTSAGUI Digital" className="h-16 w-auto" />
-                    <div>
-                      <h2 className="text-xl font-semibold text-gray-900">{COMPANY_INFO.name}</h2>
-                      <p className="text-gray-500 text-xs italic">{COMPANY_INFO.tagline}</p>
-                    </div>
-                  </div>
-                  <h1 className="text-4xl font-light text-gray-900">Facture</h1>
+                {/* Header - Title and Logo */}
+                <div className="flex items-start justify-between mb-6">
+                  <h1 className="text-3xl font-bold text-gray-900">Facture</h1>
+                  <img src={logoNtsagui} alt="NTSAGUI Digital" className="h-12 w-auto" />
                 </div>
-                {/* Invoice Meta */}
-                <div className="grid grid-cols-3 gap-8 mb-8 text-sm">
-                  <div>
-                    <p className="text-gray-500 font-medium mb-1">Numéro de facture</p>
-                    <p className="text-gray-900">{invoiceNumber}</p>
+
+                {/* Invoice Meta - Compact format */}
+                <div className="mb-8 text-sm space-y-1">
+                  <div className="flex">
+                    <span className="text-gray-500 w-36">Numéro de facture</span>
+                    <span className="text-gray-900 font-medium">{invoiceNumber}</span>
                   </div>
-                  <div>
-                    <p className="text-gray-500 font-medium mb-1">Date d'émission</p>
-                    <p className="text-gray-900">{formattedIssueDate}</p>
+                  <div className="flex">
+                    <span className="text-gray-500 w-36">Date d'émission</span>
+                    <span className="text-gray-900">{formattedIssueDate}</span>
                   </div>
-                  <div>
-                    <p className="text-gray-500 font-medium mb-1">Date d'échéance</p>
-                    <p className="text-gray-900">{formattedDueDate}</p>
+                  <div className="flex">
+                    <span className="text-gray-500 w-36">Date d'échéance</span>
+                    <span className="text-gray-900">{formattedDueDate}</span>
                   </div>
                 </div>
 
-                {/* Company and Client Info */}
-                <div className="grid grid-cols-2 gap-8 mb-8 text-sm">
+                {/* Company and Client Info - Two columns */}
+                <div className="grid grid-cols-2 gap-12 mb-10 text-sm">
                   <div>
-                    <p className="font-semibold text-gray-900 mb-1">{COMPANY_INFO.name}</p>
-                    <p className="text-gray-500 text-xs italic mb-2">{COMPANY_INFO.tagline}</p>
+                    <p className="font-semibold text-gray-900 mb-2">{COMPANY_INFO.name}</p>
                     <p className="text-gray-600">{COMPANY_INFO.address}</p>
-                    <p className="text-gray-600">{COMPANY_INFO.city}, {COMPANY_INFO.country}</p>
+                    <p className="text-gray-600">{COMPANY_INFO.city}</p>
+                    <p className="text-gray-600">{COMPANY_INFO.country}</p>
                     <p className="text-gray-600">{COMPANY_INFO.phone}</p>
                     <p className="text-gray-600">{COMPANY_INFO.email}</p>
-                    <p className="text-gray-600">{COMPANY_INFO.website}</p>
-                    <div className="mt-2 pt-2 border-t border-gray-100">
-                      <p className="text-gray-500 text-xs">{COMPANY_INFO.legalForm}</p>
-                      <p className="text-gray-500 text-xs">RCCM: {COMPANY_INFO.rccm}</p>
-                      <p className="text-gray-500 text-xs">NIF: {COMPANY_INFO.nif}</p>
-                      <p className="text-gray-500 text-xs">ANPI: {COMPANY_INFO.anpi}</p>
-                    </div>
+                    <p className="text-gray-600">RCCM: {COMPANY_INFO.rccm}</p>
+                    <p className="text-gray-600">NIF: {COMPANY_INFO.nif}</p>
                   </div>
                   {client && (
                     <div>
                       <p className="font-semibold text-gray-900 mb-2">Facturer à</p>
-                      <p className="text-gray-900 font-medium">{client.name}</p>
+                      <p className="text-gray-600">{client.name}</p>
+                      {client.company && <p className="text-gray-600">{client.company}</p>}
                       {client.address && <p className="text-gray-600">{client.address}</p>}
                       {client.city && <p className="text-gray-600">{client.city}</p>}
-                      <p className="text-gray-600">{client.country || 'France'}</p>
+                      <p className="text-gray-600">{client.country || 'Gabon'}</p>
                       {client.phone && <p className="text-gray-600">{client.phone}</p>}
                       <p className="text-gray-600">{client.email}</p>
                     </div>
@@ -434,33 +425,33 @@ export function MinimalInvoice() {
 
                 {/* Amount Due Banner */}
                 <div className="mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">
+                  <h2 className="text-2xl font-bold text-gray-900">
                     {formatCurrency(calculateTotal(), currency)} à payer avant le {formattedDueDate}
                   </h2>
                 </div>
 
-                {/* Items Description */}
+                {/* Notes/Description */}
                 {notes && (
-                  <p className="text-gray-600 text-sm mb-4">{notes}</p>
+                  <p className="text-gray-600 text-sm mb-6">{notes}</p>
                 )}
 
-                {/* Items Table */}
+                {/* Items Table - Minimal style */}
                 <table className="w-full mb-8 text-sm">
                   <thead>
-                    <tr className="border-b border-gray-200">
+                    <tr className="border-b-2 border-gray-200">
                       <th className="text-left py-3 text-gray-500 font-medium">Description</th>
-                      <th className="text-center py-3 text-gray-500 font-medium w-16">Qté</th>
-                      <th className="text-right py-3 text-gray-500 font-medium w-24">Prix unitaire</th>
-                      <th className="text-right py-3 text-gray-500 font-medium w-24">Montant</th>
+                      <th className="text-right py-3 text-gray-500 font-medium w-16">Qté</th>
+                      <th className="text-right py-3 text-gray-500 font-medium w-28">Prix unitaire</th>
+                      <th className="text-right py-3 text-gray-500 font-medium w-28">Montant</th>
                     </tr>
                   </thead>
                   <tbody>
                     {items.filter(item => item.productId).map((item, index) => (
                       <tr key={index} className="border-b border-gray-100">
                         <td className="py-4 text-gray-900 pr-4">
-                          <p className="whitespace-pre-wrap">{item.description}</p>
+                          <p className="whitespace-pre-wrap leading-relaxed">{item.description}</p>
                         </td>
-                        <td className="py-4 text-center text-gray-900">{item.quantity}</td>
+                        <td className="py-4 text-right text-gray-900">{item.quantity}</td>
                         <td className="py-4 text-right text-gray-900">{formatCurrency(item.unitPrice, currency)}</td>
                         <td className="py-4 text-right text-gray-900">{formatCurrency(item.quantity * item.unitPrice, currency)}</td>
                       </tr>
@@ -468,22 +459,29 @@ export function MinimalInvoice() {
                   </tbody>
                 </table>
 
-                {/* Totals */}
-                <div className="flex justify-end">
-                  <div className="w-64 text-sm">
-                    <div className="flex justify-between py-2">
-                      <span className="text-gray-500">Sous-total</span>
-                      <span className="text-gray-900">{formatCurrency(calculateTotal(), currency)}</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-t border-gray-200">
-                      <span className="text-gray-500">Total</span>
-                      <span className="text-gray-900">{formatCurrency(calculateTotal(), currency)}</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-t border-gray-900 font-semibold">
-                      <span className="text-gray-900">Montant dû</span>
-                      <span className="text-gray-900">{formatCurrency(calculateTotal(), currency)} {currency}</span>
+                {/* Totals - Right aligned, minimal */}
+                <div className="border-t-2 border-gray-200 pt-4">
+                  <div className="flex justify-end">
+                    <div className="w-72 text-sm">
+                      <div className="flex justify-between py-2">
+                        <span className="text-gray-500">Sous-total</span>
+                        <span className="text-gray-900">{formatCurrency(calculateTotal(), currency)}</span>
+                      </div>
+                      <div className="flex justify-between py-2">
+                        <span className="text-gray-500">Total</span>
+                        <span className="text-gray-900 font-semibold">{formatCurrency(calculateTotal(), currency)}</span>
+                      </div>
+                      <div className="flex justify-between py-3 border-t border-gray-900 mt-2">
+                        <span className="text-gray-900 font-bold">Montant dû</span>
+                        <span className="text-gray-900 font-bold">{formatCurrency(calculateTotal(), currency)}</span>
+                      </div>
                     </div>
                   </div>
+                </div>
+
+                {/* Footer - Legal info */}
+                <div className="mt-10 pt-6 border-t border-gray-100 text-xs text-gray-400">
+                  <p>{COMPANY_INFO.legalForm} • ANPI: {COMPANY_INFO.anpi}</p>
                 </div>
               </div>
             </CardContent>
