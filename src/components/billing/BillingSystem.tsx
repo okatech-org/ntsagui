@@ -5,7 +5,8 @@ import { ClientsManager } from "./ClientsManager";
 import { ProductsManager } from "./ProductsManager";
 import { DocumentCreator } from "./DocumentCreator";
 import { DocumentsList } from "./DocumentsList";
-import { LayoutDashboard, Users, Package, FileText, ShoppingCart, Receipt, FolderOpen } from "lucide-react";
+import { MinimalInvoice } from "./MinimalInvoice";
+import { LayoutDashboard, Users, Package, FileText, ShoppingCart, Receipt, FolderOpen, Sparkles } from "lucide-react";
 
 export function BillingSystem() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -43,6 +44,10 @@ export function BillingSystem() {
             <Receipt className="h-4 w-4" />
             <span className="hidden sm:inline">Factures</span>
           </TabsTrigger>
+          <TabsTrigger value="facture-minimal" className="flex items-center gap-2 flex-1 min-w-[130px]">
+            <Sparkles className="h-4 w-4" />
+            <span className="hidden sm:inline">Facture Pro</span>
+          </TabsTrigger>
           <TabsTrigger value="documents" className="flex items-center gap-2 flex-1 min-w-[100px]">
             <FolderOpen className="h-4 w-4" />
             <span className="hidden sm:inline">Documents</span>
@@ -66,6 +71,9 @@ export function BillingSystem() {
         </TabsContent>
         <TabsContent value="facture" className="mt-6">
           <DocumentCreator type="facture" />
+        </TabsContent>
+        <TabsContent value="facture-minimal" className="mt-6">
+          <MinimalInvoice />
         </TabsContent>
         <TabsContent value="documents" className="mt-6">
           <DocumentsList />
