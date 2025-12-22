@@ -55,12 +55,9 @@ const formatCurrency = (amount: number, currency = 'XAF') => {
   }).format(amount);
 };
 
-type PDFQuality = 'standard' | 'high';
-
 export function InvoiceViewEditDialog({ document: doc, open, onOpenChange }: InvoiceViewEditDialogProps) {
   const [activeTab, setActiveTab] = useState<string>("view");
   const [linkCopied, setLinkCopied] = useState(false);
-  const [pdfQuality, setPdfQuality] = useState<PDFQuality>('high');
   const [editData, setEditData] = useState({
     notes: doc?.notes || '',
     payment_due_date: doc?.payment_due_date || '',
@@ -147,39 +144,41 @@ export function InvoiceViewEditDialog({ document: doc, open, onOpenChange }: Inv
     window.open(`mailto:${client?.email || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
   };
 
-  const exportToPDF = async (quality: PDFQuality = pdfQuality) => {
+  const exportToPDF = async () => {
     if (!previewRef.current) {
       toast.error("Erreur lors de la génération du PDF");
       return;
     }
 
-    const scale = quality === 'high' ? 4 : 2;
-
     try {
+      // Use high scale for crisp text
       const canvas = await html2canvas(previewRef.current, {
-        scale,
+        scale: 3,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
         allowTaint: true,
-        imageTimeout: 0
+        imageTimeout: 0,
+        windowWidth: previewRef.current.scrollWidth,
+        windowHeight: previewRef.current.scrollHeight
       });
 
-      const imgData = canvas.toDataURL('image/png', 1.0);
       const pdf = new jsPDF({
         orientation: 'p',
         unit: 'mm',
         format: 'a4',
-        compress: quality === 'standard'
+        compress: false
       });
+      
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      // Fit image to A4 maintaining aspect ratio
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
       const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
 
-      pdf.addImage(imgData, 'PNG', imgX, 0, imgWidth * ratio, imgHeight * ratio, undefined, quality === 'high' ? 'FAST' : 'MEDIUM');
+      pdf.addImage(canvas.toDataURL('image/png', 1.0), 'PNG', 0, 0, imgWidth * ratio, imgHeight * ratio, undefined, 'NONE');
       pdf.save(`Facture-${doc.number}.pdf`);
 
       toast.success('PDF généré avec succès !');
@@ -432,17 +431,8 @@ export function InvoiceViewEditDialog({ document: doc, open, onOpenChange }: Inv
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-3 mt-4">
-              <Select value={pdfQuality} onValueChange={(v) => setPdfQuality(v as PDFQuality)}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Qualité PDF" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="standard">Standard (rapide)</SelectItem>
-                  <SelectItem value="high">Haute définition</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button onClick={() => exportToPDF()} className="gap-2">
+            <div className="flex justify-center mt-4">
+              <Button onClick={exportToPDF} className="gap-2">
                 <FileDown className="h-4 w-4" />
                 Télécharger PDF
               </Button>
