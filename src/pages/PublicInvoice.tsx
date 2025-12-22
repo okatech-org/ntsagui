@@ -11,9 +11,8 @@ import { toast } from "sonner";
 import { Check, CreditCard, Download, Eye, Share2, Copy, Mail, MessageCircle } from "lucide-react";
 import logoNtsagui from "@/assets/logo-ntsagui.png";
 import tamponNtsagui from "@/assets/tampon-ntsagui.png";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 import { QRCodeSVG } from "qrcode.react";
+import { generateInvoicePDF } from "@/lib/pdfInvoiceGenerator";
 
 const COMPANY_INFO = {
   name: "NTSAGUI Digital",
@@ -168,43 +167,25 @@ export default function PublicInvoice() {
   };
 
   const exportToPDF = async () => {
-    if (!invoiceRef.current) return;
-    
     setExporting(true);
     
     try {
-      // Temporarily remove the scale transform to capture at full size
-      const originalTransform = invoiceRef.current.style.transform;
-      const originalTransformOrigin = invoiceRef.current.style.transformOrigin;
-      invoiceRef.current.style.transform = 'none';
-      invoiceRef.current.style.transformOrigin = 'top left';
-
-      const canvas = await html2canvas(invoiceRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        allowTaint: true,
-        imageTimeout: 0
-      });
-
-      // Restore the original transform
-      invoiceRef.current.style.transform = originalTransform;
-      invoiceRef.current.style.transformOrigin = originalTransformOrigin;
-      
-      const pdf = new jsPDF({
-        orientation: 'p',
-        unit: 'mm',
-        format: 'a4',
-        compress: false
-      });
-      
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      
-      pdf.addImage(canvas.toDataURL('image/png', 1.0), 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'NONE');
-      pdf.save(`${getDocumentTitle(document.type)}_${document.number}.pdf`);
-      
+      await generateInvoicePDF(
+        {
+          number: document.number,
+          type: document.type,
+          date: document.date,
+          payment_due_date: document.payment_due_date,
+          client_name: document.client_name,
+          notes: document.notes,
+          items: items,
+          subtotal: subtotal,
+          total: total,
+          client_confirmed_payment: document.client_confirmed_payment,
+          public_token: document.public_token
+        },
+        client
+      );
       toast.success('PDF téléchargé avec succès !');
     } catch (error) {
       console.error('Error generating PDF:', error);

@@ -4,17 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { FileDown, Save, Link, Copy, Check, Share2, Eye, Pencil, Mail, MessageCircle } from "lucide-react";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+import { FileDown, Save, Copy, Check, Share2, Eye, Pencil, Mail, MessageCircle, Link2 } from "lucide-react";
 import logoNtsagui from "@/assets/logo-ntsagui.png";
 import tamponNtsagui from "@/assets/tampon-ntsagui.png";
 import { QRCodeSVG } from "qrcode.react";
+import { generateInvoicePDF } from "@/lib/pdfInvoiceGenerator";
 
 interface InvoiceItem {
   productId: string;
@@ -145,44 +143,23 @@ export function InvoiceViewEditDialog({ document: doc, open, onOpenChange }: Inv
   };
 
   const exportToPDF = async () => {
-    if (!previewRef.current) {
-      toast.error("Erreur lors de la génération du PDF");
-      return;
-    }
-
     try {
-      // Temporarily remove the scale transform to capture at full size
-      const originalTransform = previewRef.current.style.transform;
-      const originalTransformOrigin = previewRef.current.style.transformOrigin;
-      previewRef.current.style.transform = 'none';
-      previewRef.current.style.transformOrigin = 'top left';
-
-      const canvas = await html2canvas(previewRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        allowTaint: true,
-        imageTimeout: 0
-      });
-
-      // Restore the original transform
-      previewRef.current.style.transform = originalTransform;
-      previewRef.current.style.transformOrigin = originalTransformOrigin;
-
-      const pdf = new jsPDF({
-        orientation: 'p',
-        unit: 'mm',
-        format: 'a4',
-        compress: false
-      });
-      
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      
-      pdf.addImage(canvas.toDataURL('image/png', 1.0), 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'NONE');
-      pdf.save(`Facture-${doc.number}.pdf`);
-
+      await generateInvoicePDF(
+        {
+          number: doc.number,
+          type: doc.type,
+          date: doc.date,
+          payment_due_date: doc.payment_due_date,
+          client_name: doc.client_name,
+          notes: doc.notes,
+          items: items,
+          subtotal: subtotal,
+          total: total,
+          client_confirmed_payment: doc.client_confirmed_payment,
+          public_token: doc.public_token
+        },
+        client
+      );
       toast.success('PDF généré avec succès !');
     } catch (error) {
       console.error('Erreur PDF:', error);
@@ -552,7 +529,7 @@ export function InvoiceViewEditDialog({ document: doc, open, onOpenChange }: Inv
               </>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                <Link className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <Link2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>Aucun lien public disponible pour cette facture.</p>
                 <p className="text-sm mt-2">Le lien est généré automatiquement lors de la création.</p>
               </div>
