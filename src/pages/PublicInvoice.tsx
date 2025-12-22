@@ -148,14 +148,21 @@ export default function PublicInvoice() {
     setExporting(true);
     try {
       const canvas = await html2canvas(invoiceRef.current, {
-        scale: 2,
+        scale: 4,
         useCORS: true,
         logging: false,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        allowTaint: true,
+        imageTimeout: 0
       });
       
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      const pdf = new jsPDF({
+        orientation: 'p',
+        unit: 'mm',
+        format: 'a4',
+        compress: false
+      });
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const imgWidth = canvas.width;
@@ -163,7 +170,7 @@ export default function PublicInvoice() {
       const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
       const imgX = (pdfWidth - imgWidth * ratio) / 2;
       
-      pdf.addImage(imgData, 'PNG', imgX, 0, imgWidth * ratio, imgHeight * ratio);
+      pdf.addImage(imgData, 'PNG', imgX, 0, imgWidth * ratio, imgHeight * ratio, undefined, 'FAST');
       pdf.save(`${getDocumentTitle(document.type)}_${document.number}.pdf`);
       
       toast.success('PDF téléchargé avec succès !');
@@ -358,8 +365,8 @@ export default function PublicInvoice() {
 
             {/* Totals and Stamp */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '10px' }}>
-              <div style={{ textAlign: 'center' }}>
-                <img src={tamponNtsagui} alt="Tampon" style={{ height: '90px', width: 'auto' }} />
+              <div style={{ textAlign: 'center', backgroundColor: 'transparent' }}>
+                <img src={tamponNtsagui} alt="Tampon" style={{ height: '90px', width: 'auto', mixBlendMode: 'multiply' }} />
               </div>
 
               <div style={{ textAlign: 'center', padding: '6px', backgroundColor: 'white', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
