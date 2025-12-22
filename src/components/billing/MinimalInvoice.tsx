@@ -18,7 +18,17 @@ interface InvoiceItem {
   quantity: number;
   unitPrice: number;
   description: string;
+  unit: string;
 }
+
+const UNIT_OPTIONS = [
+  { value: 'unité', label: 'Unité' },
+  { value: 'jour', label: 'Jour' },
+  { value: 'heure', label: 'Heure' },
+  { value: 'mois', label: 'Mois' },
+  { value: 'an', label: 'An' },
+  { value: 'forfait', label: 'Forfait' },
+];
 
 const COMPANY_INFO = {
   name: "NTSAGUI Digital",
@@ -45,7 +55,7 @@ const formatCurrency = (amount: number, currency = 'USD') => {
 
 export function MinimalInvoice() {
   const [selectedClient, setSelectedClient] = useState('');
-  const [items, setItems] = useState<InvoiceItem[]>([{ productId: '', quantity: 1, unitPrice: 0, description: '' }]);
+  const [items, setItems] = useState<InvoiceItem[]>([{ productId: '', quantity: 1, unitPrice: 0, description: '', unit: 'unité' }]);
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
   const [dueDate, setDueDate] = useState(new Date().toISOString().split('T')[0]);
@@ -126,7 +136,7 @@ export function MinimalInvoice() {
   });
 
   const addItem = () => {
-    setItems([...items, { productId: '', quantity: 1, unitPrice: 0, description: '' }]);
+    setItems([...items, { productId: '', quantity: 1, unitPrice: 0, description: '', unit: 'unité' }]);
   };
 
   const removeItem = (index: number) => {
@@ -142,6 +152,7 @@ export function MinimalInvoice() {
       if (product) {
         newItems[index].unitPrice = Number(product.price);
         newItems[index].description = product.description || product.name;
+        newItems[index].unit = product.unit || 'unité';
       }
     }
     
@@ -158,7 +169,7 @@ export function MinimalInvoice() {
 
   const resetForm = () => {
     setSelectedClient('');
-    setItems([{ productId: '', quantity: 1, unitPrice: 0, description: '' }]);
+    setItems([{ productId: '', quantity: 1, unitPrice: 0, description: '', unit: 'unité' }]);
     setInvoiceNumber(generateInvoiceNumber());
     setIssueDate(new Date().toISOString().split('T')[0]);
     setDueDate(new Date().toISOString().split('T')[0]);
@@ -319,7 +330,7 @@ export function MinimalInvoice() {
                       className="text-sm"
                     />
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-4 gap-2">
                     <div className="space-y-1">
                       <Label className="text-xs">Quantité</Label>
                       <Input
@@ -328,6 +339,19 @@ export function MinimalInvoice() {
                         value={item.quantity}
                         onChange={e => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
                       />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Unité</Label>
+                      <Select value={item.unit} onValueChange={value => updateItem(index, 'unit', value)}>
+                        <SelectTrigger className="h-10">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {UNIT_OPTIONS.map(opt => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs">Prix unitaire</Label>
@@ -372,8 +396,15 @@ export function MinimalInvoice() {
             <CardContent>
               <div 
                 ref={previewRef} 
-                className="bg-white text-gray-900 p-10 rounded-lg border"
-                style={{ minHeight: '700px', fontFamily: 'system-ui, -apple-system, sans-serif' }}
+                className="bg-white text-gray-900 rounded-lg border"
+                style={{ 
+                  width: '210mm', 
+                  minHeight: '297mm', 
+                  padding: '15mm 20mm',
+                  fontFamily: 'system-ui, -apple-system, sans-serif',
+                  fontSize: '10pt',
+                  boxSizing: 'border-box'
+                }}
               >
                 {/* Header - Title and Logo */}
                 <div className="flex items-start justify-between mb-6">
@@ -435,25 +466,27 @@ export function MinimalInvoice() {
                   <p className="text-gray-600 text-sm mb-6">{notes}</p>
                 )}
 
-                {/* Items Table - Minimal style */}
-                <table className="w-full mb-8 text-sm">
+                {/* Items Table - Minimal style with Unit column */}
+                <table className="w-full mb-6" style={{ fontSize: '9pt' }}>
                   <thead>
                     <tr className="border-b-2 border-gray-200">
-                      <th className="text-left py-3 text-gray-500 font-medium">Description</th>
-                      <th className="text-right py-3 text-gray-500 font-medium w-16">Qté</th>
-                      <th className="text-right py-3 text-gray-500 font-medium w-28">Prix unitaire</th>
-                      <th className="text-right py-3 text-gray-500 font-medium w-28">Montant</th>
+                      <th className="text-left py-2 text-gray-500 font-medium">Description</th>
+                      <th className="text-center py-2 text-gray-500 font-medium w-12">Qté</th>
+                      <th className="text-center py-2 text-gray-500 font-medium w-16">Unité</th>
+                      <th className="text-right py-2 text-gray-500 font-medium w-24">Prix unitaire</th>
+                      <th className="text-right py-2 text-gray-500 font-medium w-24">Montant</th>
                     </tr>
                   </thead>
                   <tbody>
                     {items.filter(item => item.productId).map((item, index) => (
                       <tr key={index} className="border-b border-gray-100">
-                        <td className="py-4 text-gray-900 pr-4">
-                          <p className="whitespace-pre-wrap leading-relaxed">{item.description}</p>
+                        <td className="py-3 text-gray-900 pr-2">
+                          <p className="whitespace-pre-wrap leading-snug">{item.description}</p>
                         </td>
-                        <td className="py-4 text-right text-gray-900">{item.quantity}</td>
-                        <td className="py-4 text-right text-gray-900">{formatCurrency(item.unitPrice, currency)}</td>
-                        <td className="py-4 text-right text-gray-900">{formatCurrency(item.quantity * item.unitPrice, currency)}</td>
+                        <td className="py-3 text-center text-gray-900">{item.quantity}</td>
+                        <td className="py-3 text-center text-gray-900 capitalize">{item.unit}</td>
+                        <td className="py-3 text-right text-gray-900">{formatCurrency(item.unitPrice, currency)}</td>
+                        <td className="py-3 text-right text-gray-900">{formatCurrency(item.quantity * item.unitPrice, currency)}</td>
                       </tr>
                     ))}
                   </tbody>
