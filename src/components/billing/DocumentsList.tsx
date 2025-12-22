@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Eye, Trash2, ArrowRight, CreditCard, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { Eye, Trash2, ArrowRight, CreditCard, Clock, CheckCircle, AlertCircle, UserCheck } from "lucide-react";
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('fr-FR', {
@@ -268,11 +268,19 @@ export function DocumentsList() {
                       <TableCell className="font-bold">{formatCurrency(Number(doc.total))}</TableCell>
                       <TableCell>
                         {doc.type === 'facture' ? (
-                          <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${paymentConfig.className}`}>
-                            <PaymentIcon className="h-3 w-3" />
-                            {paymentConfig.label}
-                            {doc.payment_status === 'partial' && (
-                              <span className="ml-1">({formatCurrency(Number(doc.amount_paid || 0))})</span>
+                          <div className="flex flex-col gap-1">
+                            <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${paymentConfig.className}`}>
+                              <PaymentIcon className="h-3 w-3" />
+                              {paymentConfig.label}
+                              {doc.payment_status === 'partial' && (
+                                <span className="ml-1">({formatCurrency(Number(doc.amount_paid || 0))})</span>
+                              )}
+                            </div>
+                            {doc.client_confirmed_payment && (
+                              <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                <UserCheck className="h-3 w-3" />
+                                Validé par client
+                              </div>
                             )}
                           </div>
                         ) : (
