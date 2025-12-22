@@ -634,13 +634,8 @@ export function MinimalInvoice() {
                                   </>
                                 )}
                                 <p style={{ color: '#1e293b', margin: '1px 0 0 0', fontSize: '7pt' }}>
-                                  eMail: {client.email}
+                                  {[client.email, client.phone].filter(Boolean).join(' / ')}
                                 </p>
-                                {client.phone && (
-                                  <p style={{ color: '#1e293b', margin: '1px 0 0 0', fontSize: '7pt' }}>
-                                    Tél: {client.phone}
-                                  </p>
-                                )}
                               </div>
                             ) : (
                               <p style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '8pt', margin: 0 }}>Sélectionnez un client</p>
