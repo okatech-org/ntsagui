@@ -648,7 +648,7 @@ export function MinimalInvoice() {
                     <div className="max-h-[calc(100vh-200px)] overflow-auto p-4 bg-neutral-100 dark:bg-neutral-800/50">
                       <div
                         ref={previewRef}
-                        className="bg-white text-gray-900 mx-auto shadow-xl"
+                        className="mx-auto shadow-xl"
                         style={{
                           width: '210mm',
                           minHeight: '297mm',
@@ -659,7 +659,9 @@ export function MinimalInvoice() {
                           boxSizing: 'border-box',
                           transform: 'scale(0.5)',
                           transformOrigin: 'top center',
-                          position: 'relative'
+                          position: 'relative',
+                          backgroundColor: '#ffffff',
+                          color: '#111827'
                         }}
                       >
                         {/* Header Row - Logo and Company Info - Compact */}
