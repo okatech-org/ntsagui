@@ -4,10 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Check, CreditCard, Download, Settings2 } from "lucide-react";
+import { Check, CreditCard, Download } from "lucide-react";
 import logoNtsagui from "@/assets/logo-ntsagui.png";
 import tamponNtsagui from "@/assets/tampon-ntsagui.png";
 import html2canvas from "html2canvas";
@@ -56,8 +56,6 @@ interface DocumentItem {
   unit?: string;
 }
 
-type PDFQuality = 'standard' | 'high';
-
 export default function PublicInvoice() {
   const { token } = useParams<{ token: string }>();
   const [document, setDocument] = useState<any>(null);
@@ -66,7 +64,6 @@ export default function PublicInvoice() {
   const [confirmNote, setConfirmNote] = useState('');
   const [confirming, setConfirming] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [pdfQuality, setPdfQuality] = useState<PDFQuality>('high');
   const invoiceRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -146,37 +143,37 @@ export default function PublicInvoice() {
     return `${window.location.origin}/invoice/${token}`;
   };
 
-  const exportToPDF = async (quality: PDFQuality = pdfQuality) => {
+  const exportToPDF = async () => {
     if (!invoiceRef.current) return;
     
     setExporting(true);
-    const scale = quality === 'high' ? 4 : 2;
     
     try {
       const canvas = await html2canvas(invoiceRef.current, {
-        scale,
+        scale: 3,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
         allowTaint: true,
-        imageTimeout: 0
+        imageTimeout: 0,
+        windowWidth: invoiceRef.current.scrollWidth,
+        windowHeight: invoiceRef.current.scrollHeight
       });
       
-      const imgData = canvas.toDataURL('image/png', 1.0);
       const pdf = new jsPDF({
         orientation: 'p',
         unit: 'mm',
         format: 'a4',
-        compress: quality === 'standard'
+        compress: false
       });
+      
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
       const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
       
-      pdf.addImage(imgData, 'PNG', imgX, 0, imgWidth * ratio, imgHeight * ratio, undefined, quality === 'high' ? 'FAST' : 'MEDIUM');
+      pdf.addImage(canvas.toDataURL('image/png', 1.0), 'PNG', 0, 0, imgWidth * ratio, imgHeight * ratio, undefined, 'NONE');
       pdf.save(`${getDocumentTitle(document.type)}_${document.number}.pdf`);
       
       toast.success('PDF téléchargé avec succès !');
@@ -227,21 +224,9 @@ export default function PublicInvoice() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted py-8 px-4">
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Download Options */}
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 print:hidden">
-          <div className="flex items-center gap-2">
-            <Settings2 className="h-4 w-4 text-muted-foreground" />
-            <Select value={pdfQuality} onValueChange={(v) => setPdfQuality(v as PDFQuality)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Qualité PDF" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="standard">Standard (rapide)</SelectItem>
-                <SelectItem value="high">Haute définition</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <Button onClick={() => exportToPDF()} disabled={exporting} size="lg" className="gap-2">
+        {/* Download Button */}
+        <div className="flex justify-center print:hidden">
+          <Button onClick={exportToPDF} disabled={exporting} size="lg" className="gap-2">
             {exporting ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
