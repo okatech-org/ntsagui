@@ -173,16 +173,24 @@ export default function PublicInvoice() {
     setExporting(true);
     
     try {
+      // Temporarily remove the scale transform to capture at full size
+      const originalTransform = invoiceRef.current.style.transform;
+      const originalTransformOrigin = invoiceRef.current.style.transformOrigin;
+      invoiceRef.current.style.transform = 'none';
+      invoiceRef.current.style.transformOrigin = 'top left';
+
       const canvas = await html2canvas(invoiceRef.current, {
-        scale: 3,
+        scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
         allowTaint: true,
-        imageTimeout: 0,
-        windowWidth: invoiceRef.current.scrollWidth,
-        windowHeight: invoiceRef.current.scrollHeight
+        imageTimeout: 0
       });
+
+      // Restore the original transform
+      invoiceRef.current.style.transform = originalTransform;
+      invoiceRef.current.style.transformOrigin = originalTransformOrigin;
       
       const pdf = new jsPDF({
         orientation: 'p',
@@ -193,11 +201,8 @@ export default function PublicInvoice() {
       
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
       
-      pdf.addImage(canvas.toDataURL('image/png', 1.0), 'PNG', 0, 0, imgWidth * ratio, imgHeight * ratio, undefined, 'NONE');
+      pdf.addImage(canvas.toDataURL('image/png', 1.0), 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'NONE');
       pdf.save(`${getDocumentTitle(document.type)}_${document.number}.pdf`);
       
       toast.success('PDF téléchargé avec succès !');
