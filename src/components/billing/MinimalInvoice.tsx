@@ -633,6 +633,11 @@ export function MinimalInvoice() {
                                     </p>
                                   </>
                                 )}
+                                {(client.address || client.city || client.country) && (
+                                  <p style={{ color: '#1e293b', margin: '4px 0 0 0', fontSize: '7pt' }}>
+                                    {[client.address, client.city, client.country].filter(Boolean).join(', ')}
+                                  </p>
+                                )}
                                 <p style={{ color: '#1e293b', margin: '1px 0 0 0', fontSize: '7pt' }}>
                                   {[client.email, client.phone].filter(Boolean).join(' / ')}
                                 </p>

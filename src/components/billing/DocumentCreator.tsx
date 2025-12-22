@@ -398,6 +398,11 @@ export function DocumentCreator({ type }: DocumentCreatorProps) {
                         <p className="text-foreground text-xs">{(client as any).contact_name}</p>
                       </>
                     )}
+                    {((client as any).address || (client as any).city || (client as any).country) && (
+                      <p className="text-foreground text-xs mt-1">
+                        {[(client as any).address, (client as any).city, (client as any).country].filter(Boolean).join(', ')}
+                      </p>
+                    )}
                     <p className="text-foreground text-xs">
                       {[client.email, client.phone].filter(Boolean).join(' / ')}
                     </p>
