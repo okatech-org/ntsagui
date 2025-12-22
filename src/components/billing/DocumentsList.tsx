@@ -157,6 +157,7 @@ export function DocumentsList() {
     .filter(d => {
       if (paymentFilter === 'all') return true;
       if (d.type !== 'facture') return paymentFilter === 'all';
+      if (paymentFilter === 'client_confirmed') return d.client_confirmed_payment;
       return d.payment_status === paymentFilter;
     });
 
@@ -165,6 +166,7 @@ export function DocumentsList() {
   const facturesCount = documents.filter(d => d.type === 'facture').length;
   const overdueCount = documents.filter(d => d.type === 'facture' && d.payment_status === 'overdue').length;
   const pendingCount = documents.filter(d => d.type === 'facture' && d.payment_status === 'pending').length;
+  const clientConfirmedCount = documents.filter(d => d.type === 'facture' && d.client_confirmed_payment).length;
 
   return (
     <div className="space-y-6">
@@ -211,7 +213,8 @@ export function DocumentsList() {
             { value: 'pending', label: `En attente (${pendingCount})` },
             { value: 'partial', label: 'Partiels' },
             { value: 'paid', label: 'Payés' },
-            { value: 'overdue', label: `En retard (${overdueCount})`, className: overdueCount > 0 ? 'text-red-600' : '' }
+            { value: 'overdue', label: `En retard (${overdueCount})`, className: overdueCount > 0 ? 'text-red-600' : '' },
+            { value: 'client_confirmed', label: `Validés client (${clientConfirmedCount})`, className: 'text-blue-600' }
           ].map(item => (
             <Button
               key={item.value}
