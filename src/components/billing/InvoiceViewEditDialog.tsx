@@ -151,17 +151,24 @@ export function InvoiceViewEditDialog({ document: doc, open, onOpenChange }: Inv
     }
 
     try {
-      // Use high scale for crisp text
+      // Temporarily remove the scale transform to capture at full size
+      const originalTransform = previewRef.current.style.transform;
+      const originalTransformOrigin = previewRef.current.style.transformOrigin;
+      previewRef.current.style.transform = 'none';
+      previewRef.current.style.transformOrigin = 'top left';
+
       const canvas = await html2canvas(previewRef.current, {
-        scale: 3,
+        scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
         allowTaint: true,
-        imageTimeout: 0,
-        windowWidth: previewRef.current.scrollWidth,
-        windowHeight: previewRef.current.scrollHeight
+        imageTimeout: 0
       });
+
+      // Restore the original transform
+      previewRef.current.style.transform = originalTransform;
+      previewRef.current.style.transformOrigin = originalTransformOrigin;
 
       const pdf = new jsPDF({
         orientation: 'p',
@@ -173,12 +180,7 @@ export function InvoiceViewEditDialog({ document: doc, open, onOpenChange }: Inv
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
-      // Fit image to A4 maintaining aspect ratio
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-
-      pdf.addImage(canvas.toDataURL('image/png', 1.0), 'PNG', 0, 0, imgWidth * ratio, imgHeight * ratio, undefined, 'NONE');
+      pdf.addImage(canvas.toDataURL('image/png', 1.0), 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'NONE');
       pdf.save(`Facture-${doc.number}.pdf`);
 
       toast.success('PDF généré avec succès !');
