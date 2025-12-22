@@ -1,4 +1,5 @@
 import jsPDF from "jspdf";
+import QRCode from "qrcode";
 import logoNtsagui from "@/assets/logo-ntsagui.png";
 import tamponNtsagui from "@/assets/tampon-ntsagui.png";
 
@@ -89,59 +90,19 @@ const loadImage = (src: string): Promise<HTMLImageElement> => {
   });
 };
 
-// Simple QR Code generator using canvas
-const generateQRCodeCanvas = (data: string, size: number): HTMLCanvasElement | null => {
+// Generate QR Code as data URL using qrcode library
+const generateQRCodeDataURL = async (data: string): Promise<string | null> => {
   try {
-    // Use a simple encoding approach for QR-like visual
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
-
-    // Create a simple QR-like pattern based on data hash
-    const moduleCount = 25;
-    const moduleSize = size / moduleCount;
-    
-    // Generate pattern from data
-    const hash = data.split('').reduce((acc, char, i) => {
-      return acc + char.charCodeAt(0) * (i + 1);
-    }, 0);
-    
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, size, size);
-    ctx.fillStyle = '#000000';
-    
-    // Position patterns (corners)
-    const drawPositionPattern = (x: number, y: number) => {
-      // Outer
-      ctx.fillRect(x * moduleSize, y * moduleSize, 7 * moduleSize, 7 * moduleSize);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect((x + 1) * moduleSize, (y + 1) * moduleSize, 5 * moduleSize, 5 * moduleSize);
-      ctx.fillStyle = '#000000';
-      ctx.fillRect((x + 2) * moduleSize, (y + 2) * moduleSize, 3 * moduleSize, 3 * moduleSize);
-    };
-    
-    drawPositionPattern(0, 0);
-    drawPositionPattern(moduleCount - 7, 0);
-    drawPositionPattern(0, moduleCount - 7);
-    
-    // Data modules (pseudo-random based on input)
-    for (let row = 0; row < moduleCount; row++) {
-      for (let col = 0; col < moduleCount; col++) {
-        // Skip position patterns
-        if ((row < 8 && col < 8) || (row < 8 && col > moduleCount - 9) || (row > moduleCount - 9 && col < 8)) {
-          continue;
-        }
-        
-        const seed = (hash + row * moduleCount + col) % 100;
-        if (seed < 45) {
-          ctx.fillRect(col * moduleSize, row * moduleSize, moduleSize, moduleSize);
-        }
-      }
-    }
-    
-    return canvas;
+    const dataUrl = await QRCode.toDataURL(data, {
+      width: 200,
+      margin: 1,
+      color: {
+        dark: '#000000',
+        light: '#ffffff'
+      },
+      errorCorrectionLevel: 'M'
+    });
+    return dataUrl;
   } catch (e) {
     console.warn('Could not generate QR code', e);
     return null;
@@ -492,10 +453,10 @@ export const generateInvoicePDF = async (
     pdf.setDrawColor(COLORS.borderGray);
     pdf.roundedRect(qrX - 2, qrY - 2, qrSize + 4, qrSize + 8, 1, 1, 'FD');
     
-    // Generate QR code using canvas
-    const qrCanvas = generateQRCodeCanvas(invoiceUrl, qrSize * 4);
-    if (qrCanvas) {
-      pdf.addImage(qrCanvas.toDataURL('image/png'), 'PNG', qrX, qrY, qrSize, qrSize);
+    // Generate real QR code using qrcode library
+    const qrDataUrl = await generateQRCodeDataURL(invoiceUrl);
+    if (qrDataUrl) {
+      pdf.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
     }
     
     // Label under QR code
