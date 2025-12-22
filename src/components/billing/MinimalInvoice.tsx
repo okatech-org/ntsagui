@@ -48,11 +48,12 @@ const COMPANY_INFO = {
   anpi: "ANPI24208339150I1"
 };
 
-const formatCurrency = (amount: number, currency = 'USD') => {
+const formatCurrency = (amount: number, currency = 'XAF') => {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: currency,
-    minimumFractionDigits: 2
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
   }).format(amount);
 };
 
@@ -63,7 +64,7 @@ export function MinimalInvoice() {
   const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
   const [dueDate, setDueDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
-  const [currency, setCurrency] = useState('USD');
+  const [currency, setCurrency] = useState('XAF');
   const [showPreview, setShowPreview] = useState(true);
   const previewRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
@@ -297,9 +298,9 @@ export function MinimalInvoice() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="XAF">XAF (FCFA)</SelectItem>
                       <SelectItem value="USD">USD ($)</SelectItem>
                       <SelectItem value="EUR">EUR (€)</SelectItem>
-                      <SelectItem value="XAF">XAF (FCFA)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -507,11 +508,6 @@ export function MinimalInvoice() {
                     <p className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                       {formatCurrency(calculateTotal(), currency)}
                     </p>
-                    {currency === 'USD' && (
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        ≈ {formatCurrency(calculateTotal() * 600, 'XAF')}
-                      </p>
-                    )}
                   </div>
                 </div>
               </motion.div>
