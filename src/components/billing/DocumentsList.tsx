@@ -10,8 +10,9 @@ import { Label } from "@/components/ui/label";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Eye, Trash2, ArrowRight, CreditCard, Clock, CheckCircle, AlertCircle, UserCheck, Info } from "lucide-react";
+import { Eye, Trash2, ArrowRight, CreditCard, Clock, CheckCircle, AlertCircle, UserCheck, Info, FileDown, Share2, Pencil } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { InvoiceViewEditDialog } from "./InvoiceViewEditDialog";
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('fr-FR', {
@@ -57,6 +58,7 @@ export function DocumentsList() {
   const [paymentFilter, setPaymentFilter] = useState<string>('all');
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
   const [paymentAmount, setPaymentAmount] = useState('');
+  const [viewEditDoc, setViewEditDoc] = useState<any>(null);
   const queryClient = useQueryClient();
 
   const { data: documents = [], isLoading } = useQuery({
@@ -331,6 +333,16 @@ export function DocumentsList() {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
+                          {doc.type === 'facture' && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => setViewEditDoc(doc)}
+                              title="Voir / Modifier / Partager"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          )}
                           {doc.type === 'devis' && (
                             <Button 
                               size="sm" 
@@ -403,6 +415,13 @@ export function DocumentsList() {
           </CardContent>
         </Card>
       )}
+
+      {/* Invoice View/Edit Dialog */}
+      <InvoiceViewEditDialog 
+        document={viewEditDoc} 
+        open={!!viewEditDoc} 
+        onOpenChange={(open) => !open && setViewEditDoc(null)} 
+      />
     </div>
   );
 }
