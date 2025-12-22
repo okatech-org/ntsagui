@@ -33,6 +33,7 @@ import { useNavigate } from "react-router-dom";
 import { initializeDemoData } from "@/lib/demoData";
 import LeadManagementAdvanced from "@/components/LeadManagementAdvanced";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
+import LeadStatisticsRealtime from "@/components/LeadStatisticsRealtime";
 import SettingsPanel from "@/components/SettingsPanel";
 import AdminDropdown from "@/components/AdminDropdown";
 import UserManagement from "@/components/UserManagement";
@@ -288,76 +289,14 @@ const Admin = () => {
           {/* OVERVIEW TAB */}
           {activeTab === 'overview' && (
             <>
-              {/* STATS GRID */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                {[
-                  {
-                    icon: Target,
-                    label: "Total Leads",
-                    value: stats.total.toString(),
-                    change: "+12%",
-                    trend: "up",
-                    color: "#3b82f6"
-                  },
-                  {
-                    icon: Target,
-                    label: t('admin.leadManagement.qualified'),
-                    value: stats.qualified.toString(),
-                    change: "+8%",
-                    trend: "up",
-                    color: "#10B981"
-                  },
-                  {
-                    icon: TrendingUp,
-                    label: t('admin.analytics.conversionRate'),
-                    value: stats.total > 0 ? `${((stats.converted / stats.total) * 100).toFixed(1)}%` : "0%",
-                    change: "+5%",
-                    trend: "up",
-                    color: "#8B5CF6"
-                  },
-                  {
-                    icon: Activity,
-                    label: t('admin.analytics.avgScore'),
-                    value: `${stats.avgScore}/100`,
-                    change: parseFloat(stats.avgScore as string) >= 70 ? "+3%" : "-2%",
-                    trend: parseFloat(stats.avgScore as string) >= 70 ? "up" : "down",
-                    color: parseFloat(stats.avgScore as string) >= 70 ? "#10B981" : "#F59E0B"
-                  }
-                ].map((stat, idx) => (
-                  <motion.div
-                    key={idx}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.1 }}
-                    className="p-6 rounded-2xl border"
-                    style={{
-                      background: currentColors.cardBg,
-                      borderColor: currentColors.borderColor
-                    }}
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <div
-                        className="p-3 rounded-xl"
-                        style={{ background: stat.color + '20' }}
-                      >
-                        <stat.icon size={24} style={{ color: stat.color }} />
-                      </div>
-                      <div className="flex items-center gap-1 text-xs font-semibold" style={{
-                        color: stat.trend === 'up' ? '#10B981' : '#EF4444'
-                      }}>
-                        {stat.trend === 'up' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                        {stat.change}
-                      </div>
-                    </div>
-                    <div className="text-3xl font-bold mb-1" style={{ color: currentColors.textPrimary }}>
-                      {stat.value}
-                    </div>
-                    <p className="text-sm font-medium" style={{ color: currentColors.textMuted }}>
-                      {stat.label}
-                    </p>
-                  </motion.div>
-                ))}
-              </div>
+              {/* Real-time Statistics Dashboard */}
+              <LeadStatisticsRealtime 
+                currentColors={currentColors}
+                isDarkMode={isDarkMode}
+              />
+
+              <div className="h-8" />
+
 
               {/* LEADS MANAGEMENT */}
               <div
