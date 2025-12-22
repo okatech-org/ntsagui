@@ -8,10 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, Save, FileDown } from "lucide-react";
+import { Plus, Trash2, Save, FileDown, Eye, EyeOff, GripVertical, Package, Calculator } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import logoNtsagui from "@/assets/logo-ntsagui.png";
+import tamponNtsagui from "@/assets/tampon-ntsagui.png";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface InvoiceItem {
   productId: string;
@@ -62,6 +64,7 @@ export function MinimalInvoice() {
   const [dueDate, setDueDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
   const [currency, setCurrency] = useState('USD');
+  const [showPreview, setShowPreview] = useState(true);
   const previewRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
@@ -141,13 +144,15 @@ export function MinimalInvoice() {
   };
 
   const removeItem = (index: number) => {
-    setItems(items.filter((_, i) => i !== index));
+    if (items.length > 1) {
+      setItems(items.filter((_, i) => i !== index));
+    }
   };
 
   const updateItem = (index: number, field: keyof InvoiceItem, value: any) => {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
-    
+
     if (field === 'productId' && value) {
       const product = products.find(p => p.id === value);
       if (product) {
@@ -157,7 +162,7 @@ export function MinimalInvoice() {
         newItems[index].unit = product.unit || 'unité';
       }
     }
-    
+
     setItems(newItems);
   };
 
@@ -199,7 +204,7 @@ export function MinimalInvoice() {
         logging: false,
         backgroundColor: '#ffffff'
       });
-      
+
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -208,10 +213,10 @@ export function MinimalInvoice() {
       const imgHeight = canvas.height;
       const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
       const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      
+
       pdf.addImage(imgData, 'PNG', imgX, 0, imgWidth * ratio, imgHeight * ratio);
       pdf.save(`Invoice-${invoiceNumber}.pdf`);
-      
+
       toast.success('PDF généré avec succès !');
     } catch (error) {
       console.error('Erreur PDF:', error);
@@ -223,27 +228,59 @@ export function MinimalInvoice() {
   const formattedIssueDate = new Date(issueDate).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
   const formattedDueDate = new Date(dueDate).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
 
+  const validItems = items.filter(item => item.productId);
+
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-primary">Créer une Facture (Style Minimal)</h2>
+      {/* Header with Title and Preview Toggle */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-primary flex items-center gap-2">
+            <Calculator className="h-6 w-6" />
+            Créer une Facture
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Remplissez les informations ci-dessous pour générer votre facture
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowPreview(!showPreview)}
+          className="flex items-center gap-2"
+        >
+          {showPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          {showPreview ? 'Masquer aperçu' : 'Afficher aperçu'}
+        </Button>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className={`grid gap-6 ${showPreview ? 'xl:grid-cols-2' : 'grid-cols-1 max-w-3xl'}`}>
         {/* Form Section */}
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Informations de la facture</CardTitle>
+          {/* Invoice Info Card */}
+          <Card className="border-2 border-border/50 shadow-lg">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <span className="text-primary font-bold text-sm">#</span>
+                </div>
+                Informations de la facture
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <CardContent className="space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Numéro de facture</Label>
-                  <Input value={invoiceNumber} onChange={e => setInvoiceNumber(e.target.value)} />
+                  <Label className="text-sm font-medium">Numéro de facture</Label>
+                  <Input
+                    value={invoiceNumber}
+                    onChange={e => setInvoiceNumber(e.target.value)}
+                    className="font-mono bg-muted/50"
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label>Devise</Label>
+                  <Label className="text-sm font-medium">Devise</Label>
                   <Select value={currency} onValueChange={setCurrency}>
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-muted/50">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -254,278 +291,456 @@ export function MinimalInvoice() {
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Date d'émission</Label>
-                  <Input type="date" value={issueDate} onChange={e => setIssueDate(e.target.value)} />
+                  <Label className="text-sm font-medium">Date d'émission</Label>
+                  <Input
+                    type="date"
+                    value={issueDate}
+                    onChange={e => setIssueDate(e.target.value)}
+                    className="bg-muted/50"
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label>Date d'échéance</Label>
-                  <Input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} />
+                  <Label className="text-sm font-medium">Date d'échéance</Label>
+                  <Input
+                    type="date"
+                    value={dueDate}
+                    onChange={e => setDueDate(e.target.value)}
+                    className="bg-muted/50"
+                  />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Client *</Label>
+                <Label className="text-sm font-medium">
+                  Client <span className="text-destructive">*</span>
+                </Label>
                 <Select value={selectedClient} onValueChange={setSelectedClient}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un client" />
+                  <SelectTrigger className={`bg-muted/50 ${!selectedClient && 'border-dashed'}`}>
+                    <SelectValue placeholder="Sélectionner un client..." />
                   </SelectTrigger>
                   <SelectContent>
                     {clients.map(client => (
                       <SelectItem key={client.id} value={client.id}>
-                        {client.name} {client.company && `(${client.company})`}
+                        <div className="flex items-center gap-2">
+                          <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                            {client.name.charAt(0)}
+                          </div>
+                          <span>{client.name}</span>
+                          {client.company && <span className="text-muted-foreground">({client.company})</span>}
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Notes</Label>
+                <Label className="text-sm font-medium">Notes (optionnel)</Label>
                 <Textarea
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
                   rows={2}
-                  placeholder="Notes additionnelles..."
+                  placeholder="Conditions de paiement, mentions spéciales..."
+                  className="bg-muted/50 resize-none"
                 />
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Articles</CardTitle>
-              <Button size="sm" onClick={addItem}>
-                <Plus className="h-4 w-4 mr-1" /> Ajouter
-              </Button>
+          {/* Articles Card */}
+          <Card className="border-2 border-border/50 shadow-lg">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Package className="h-4 w-4 text-primary" />
+                  </div>
+                  Articles
+                  <span className="text-sm font-normal text-muted-foreground">
+                    ({validItems.length} article{validItems.length !== 1 ? 's' : ''})
+                  </span>
+                </CardTitle>
+                <Button size="sm" onClick={addItem} className="gap-1.5">
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Ajouter</span>
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {items.map((item, index) => (
-                <div key={index} className="p-4 bg-muted rounded-lg space-y-3">
-                  <div className="flex gap-2 items-end">
-                    <div className="flex-1 space-y-2">
-                      <Label>Produit/Service</Label>
-                      <Select value={item.productId} onValueChange={value => updateItem(index, 'productId', value)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Sélectionner..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {products.map(product => (
-                            <SelectItem key={product.id} value={product.id}>
-                              {product.name} - {formatCurrency(Number(product.price), currency)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+              <AnimatePresence mode="popLayout">
+                {items.map((item, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.2 }}
+                    className="group relative p-4 bg-muted/30 rounded-xl border border-border/50 hover:border-primary/30 transition-all"
+                  >
+                    {/* Article Number Badge */}
+                    <div className="absolute -top-2 -left-2 h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shadow-md">
+                      {index + 1}
                     </div>
+
+                    {/* Delete Button */}
                     {items.length > 1 && (
-                      <Button size="icon" variant="destructive" onClick={() => removeItem(index)}>
-                        <Trash2 className="h-4 w-4" />
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => removeItem(index)}
+                        className="absolute -top-2 -right-2 h-7 w-7 rounded-full bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs">Description</Label>
-                    <Textarea 
-                      value={item.description}
-                      onChange={e => updateItem(index, 'description', e.target.value)}
-                      rows={2}
-                      className="text-sm"
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 gap-2">
-                    <div className="space-y-1">
-                      <Label className="text-xs">Quantité</Label>
-                      <Input
-                        type="number"
-                        min={1}
-                        value={item.quantity}
-                        onChange={e => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
-                      />
+
+                    <div className="space-y-4 pt-2">
+                      {/* Product Selection */}
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Produit/Service
+                        </Label>
+                        <Select value={item.productId} onValueChange={value => updateItem(index, 'productId', value)}>
+                          <SelectTrigger className={`bg-background ${!item.productId && 'border-dashed border-primary/50'}`}>
+                            <SelectValue placeholder="Choisir un produit..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {products.map(product => (
+                              <SelectItem key={product.id} value={product.id}>
+                                <div className="flex items-center justify-between w-full gap-4">
+                                  <span>{product.name}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {formatCurrency(Number(product.price), currency)}
+                                  </span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Description */}
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Description
+                        </Label>
+                        <Textarea
+                          value={item.description}
+                          onChange={e => updateItem(index, 'description', e.target.value)}
+                          rows={2}
+                          className="text-sm bg-background resize-none"
+                          placeholder="Détails de la prestation..."
+                        />
+                      </div>
+
+                      {/* Quantity, Unit, Price Grid */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-medium text-muted-foreground">Qté</Label>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={item.quantity}
+                            onChange={e => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                            className="bg-background text-center"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-medium text-muted-foreground">Unité</Label>
+                          <Select value={item.unit} onValueChange={value => updateItem(index, 'unit', value)}>
+                            <SelectTrigger className="bg-background">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {UNIT_OPTIONS.map(opt => (
+                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-medium text-muted-foreground">Prix unit.</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            value={item.unitPrice}
+                            onChange={e => updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
+                            className="bg-background"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-medium text-muted-foreground">Montant</Label>
+                          <div className="h-10 px-3 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-end">
+                            <span className="font-semibold text-primary text-sm">
+                              {formatCurrency(item.quantity * item.unitPrice, currency)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Unité</Label>
-                      <Select value={item.unit} onValueChange={value => updateItem(index, 'unit', value)}>
-                        <SelectTrigger className="h-10">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {UNIT_OPTIONS.map(opt => (
-                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Prix unitaire</Label>
-                      <Input
-                        type="number"
-                        min={0}
-                        step="0.01"
-                        value={item.unitPrice}
-                        onChange={e => updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Montant</Label>
-                      <Input value={formatCurrency(item.quantity * item.unitPrice, currency)} disabled className="font-bold" />
-                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+
+              {/* Total Section */}
+              <motion.div
+                layout
+                className="pt-4 mt-4 border-t-2 border-dashed border-border"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-medium text-muted-foreground">Total</span>
+                  <div className="text-right">
+                    <p className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                      {formatCurrency(calculateTotal(), currency)}
+                    </p>
+                    {currency === 'USD' && (
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        ≈ {formatCurrency(calculateTotal() * 600, 'XAF')}
+                      </p>
+                    )}
                   </div>
                 </div>
-              ))}
-              
-              <div className="pt-4 border-t text-right">
-                <p className="text-2xl font-bold text-primary">Total: {formatCurrency(calculateTotal(), currency)}</p>
-              </div>
+              </motion.div>
             </CardContent>
           </Card>
 
-          <div className="flex gap-2">
-            <Button onClick={handleSave} disabled={createMutation.isPending} className="flex-1">
-              <Save className="h-4 w-4 mr-2" /> Enregistrer
+          {/* Action Buttons - Sticky on Mobile */}
+          <div className="sticky bottom-4 z-10 flex gap-3 p-4 -mx-4 bg-gradient-to-t from-background via-background to-transparent">
+            <Button
+              onClick={handleSave}
+              disabled={createMutation.isPending || !selectedClient || !validItems.length}
+              className="flex-1 h-12 text-base font-semibold shadow-lg"
+            >
+              <Save className="h-5 w-5 mr-2" />
+              {createMutation.isPending ? 'Enregistrement...' : 'Enregistrer'}
             </Button>
-            <Button onClick={exportToPDF} variant="outline" disabled={!selectedClient}>
-              <FileDown className="h-4 w-4 mr-2" /> Export PDF
+            <Button
+              onClick={exportToPDF}
+              variant="outline"
+              disabled={!selectedClient || !validItems.length}
+              className="h-12 px-6 shadow-lg"
+            >
+              <FileDown className="h-5 w-5 mr-2" />
+              <span className="hidden sm:inline">PDF</span>
             </Button>
           </div>
         </div>
 
-        {/* Preview Section - Minimal Cursor-like Design */}
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Aperçu de la facture</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div 
-                ref={previewRef} 
-                className="bg-white text-gray-900 rounded-lg border"
-                style={{ 
-                  width: '210mm', 
-                  minHeight: '297mm', 
-                  padding: '15mm 20mm',
-                  fontFamily: 'system-ui, -apple-system, sans-serif',
-                  fontSize: '10pt',
-                  boxSizing: 'border-box'
-                }}
-              >
-                {/* Header - Title and Logo */}
-                <div className="flex items-start justify-between mb-6">
-                  <h1 className="text-3xl font-bold text-gray-900">Facture</h1>
-                  <img src={logoNtsagui} alt="NTSAGUI Digital" className="h-12 w-auto" />
-                </div>
+        {/* Preview Section - Sticky on Desktop */}
+        <AnimatePresence>
+          {showPreview && (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3 }}
+              className="hidden xl:block"
+            >
+              <div className="sticky top-6">
+                <Card className="border-2 border-border/50 shadow-lg overflow-hidden">
+                  <CardHeader className="pb-3 bg-muted/30">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Eye className="h-5 w-5 text-primary" />
+                      Aperçu en temps réel
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="max-h-[calc(100vh-200px)] overflow-auto p-4 bg-neutral-100 dark:bg-neutral-800/50">
+                      <div
+                        ref={previewRef}
+                        className="bg-white text-gray-900 mx-auto shadow-xl"
+                        style={{
+                          width: '210mm',
+                          minHeight: '297mm',
+                          padding: '12mm 15mm 10mm 15mm',
+                          fontFamily: 'Arial, Helvetica, sans-serif',
+                          fontSize: '9pt',
+                          lineHeight: '1.3',
+                          boxSizing: 'border-box',
+                          transform: 'scale(0.5)',
+                          transformOrigin: 'top center',
+                          position: 'relative'
+                        }}
+                      >
+                        {/* Header Row - Logo and Company Info - Compact */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px', borderBottom: '2px solid #1e40af', paddingBottom: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <img src={logoNtsagui} alt="NTSAGUI Digital" style={{ height: '35px', width: 'auto' }} />
+                            <div>
+                              <h2 style={{ fontSize: '14pt', fontWeight: 'bold', color: '#1e40af', margin: 0 }}>{COMPANY_INFO.name}</h2>
+                              <p style={{ fontSize: '7pt', color: '#64748b', margin: 0 }}>{COMPANY_INFO.tagline}</p>
+                            </div>
+                          </div>
+                          <div style={{ textAlign: 'right', fontSize: '7pt', color: '#64748b', lineHeight: '1.4' }}>
+                            <p style={{ margin: 0 }}>{COMPANY_INFO.address}, {COMPANY_INFO.city} - {COMPANY_INFO.country}</p>
+                            <p style={{ margin: 0 }}>{COMPANY_INFO.phone} • {COMPANY_INFO.email}</p>
+                            <p style={{ margin: 0 }}>RCCM: {COMPANY_INFO.rccm} • NIF: {COMPANY_INFO.nif}</p>
+                          </div>
+                        </div>
 
-                {/* Invoice Meta - Compact format */}
-                <div className="mb-8 text-sm space-y-1">
-                  <div className="flex">
-                    <span className="text-gray-500 w-36">Numéro de facture</span>
-                    <span className="text-gray-900 font-medium">{invoiceNumber}</span>
-                  </div>
-                  <div className="flex">
-                    <span className="text-gray-500 w-36">Date d'émission</span>
-                    <span className="text-gray-900">{formattedIssueDate}</span>
-                  </div>
-                  <div className="flex">
-                    <span className="text-gray-500 w-36">Date d'échéance</span>
-                    <span className="text-gray-900">{formattedDueDate}</span>
-                  </div>
-                </div>
+                        {/* Document Title - Compact */}
+                        <div style={{ textAlign: 'center', margin: '10px 0 15px 0' }}>
+                          <h1 style={{ fontSize: '18pt', fontWeight: 'bold', color: '#1e40af', margin: 0, letterSpacing: '1px' }}>FACTURE</h1>
+                        </div>
 
-                {/* Company and Client Info - Two columns */}
-                <div className="grid grid-cols-2 gap-12 mb-10 text-sm">
-                  <div>
-                    <p className="font-semibold text-gray-900 mb-2">{COMPANY_INFO.name}</p>
-                    <p className="text-gray-600">{COMPANY_INFO.address}</p>
-                    <p className="text-gray-600">{COMPANY_INFO.city}</p>
-                    <p className="text-gray-600">{COMPANY_INFO.country}</p>
-                    <p className="text-gray-600">{COMPANY_INFO.phone}</p>
-                    <p className="text-gray-600">{COMPANY_INFO.email}</p>
-                    <p className="text-gray-600">RCCM: {COMPANY_INFO.rccm}</p>
-                    <p className="text-gray-600">NIF: {COMPANY_INFO.nif}</p>
-                  </div>
-                  {client && (
-                    <div>
-                      <p className="font-semibold text-gray-900 mb-2">Facturer à</p>
-                      <p className="text-gray-600">{client.name}</p>
-                      {client.company && <p className="text-gray-600">{client.company}</p>}
-                      {client.address && <p className="text-gray-600">{client.address}</p>}
-                      {client.city && <p className="text-gray-600">{client.city}</p>}
-                      <p className="text-gray-600">{client.country || 'Gabon'}</p>
-                      {client.phone && <p className="text-gray-600">{client.phone}</p>}
-                      <p className="text-gray-600">{client.email}</p>
+                        {/* Invoice Info and Client - Two Columns - Compact */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '20px', marginBottom: '15px' }}>
+                          {/* Invoice Details */}
+                          <div style={{ flex: 1, backgroundColor: '#f8fafc', padding: '10px', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
+                            <h3 style={{ fontSize: '8pt', fontWeight: 'bold', color: '#1e40af', margin: '0 0 6px 0', textTransform: 'uppercase' }}>Détails</h3>
+                            <div style={{ fontSize: '8pt' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+                                <span style={{ color: '#64748b' }}>N° Facture:</span>
+                                <span style={{ fontWeight: 'bold', color: '#1e293b' }}>{invoiceNumber}</span>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+                                <span style={{ color: '#64748b' }}>Émis le:</span>
+                                <span style={{ color: '#1e293b' }}>{formattedIssueDate}</span>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+                                <span style={{ color: '#64748b' }}>Échéance:</span>
+                                <span style={{ color: '#dc2626', fontWeight: 'bold' }}>{formattedDueDate}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Client Details */}
+                          <div style={{ flex: 1, backgroundColor: '#f8fafc', padding: '10px', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
+                            <h3 style={{ fontSize: '8pt', fontWeight: 'bold', color: '#1e40af', margin: '0 0 6px 0', textTransform: 'uppercase' }}>Facturer à</h3>
+                            {client ? (
+                              <div style={{ fontSize: '8pt', lineHeight: '1.5' }}>
+                                <p style={{ fontWeight: 'bold', color: '#1e293b', margin: 0 }}>{client.name}</p>
+                                {(client as any).rccm && <p style={{ color: '#64748b', margin: 0, fontSize: '7pt' }}>RCCM: {(client as any).rccm}</p>}
+                                {(client as any).nif && <p style={{ color: '#64748b', margin: 0, fontSize: '7pt' }}>NIF: {(client as any).nif}</p>}
+                                {(client as any).contact_name && (
+                                  <p style={{ color: '#1e293b', margin: '4px 0 0 0', fontSize: '7pt' }}>
+                                    Contact: {(client as any).contact_name}
+                                  </p>
+                                )}
+                                <p style={{ color: '#64748b', margin: '2px 0 0 0', fontSize: '7pt' }}>{client.email}</p>
+                              </div>
+                            ) : (
+                              <p style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '8pt', margin: 0 }}>Sélectionnez un client</p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Notes/Description */}
+                        {notes && (
+                          <div style={{ backgroundColor: '#fef3c7', padding: '6px 10px', borderRadius: '4px', marginBottom: '12px', borderLeft: '3px solid #f59e0b' }}>
+                            <p style={{ fontSize: '8pt', color: '#92400e', margin: 0 }}>{notes}</p>
+                          </div>
+                        )}
+
+                        {/* Items Table - Compact */}
+                        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '15px' }}>
+                          <thead>
+                            <tr style={{ backgroundColor: '#1e40af', color: 'white' }}>
+                              <th style={{ padding: '8px 6px', textAlign: 'left', fontSize: '8pt', fontWeight: '600' }}>Description</th>
+                              <th style={{ padding: '8px 6px', textAlign: 'center', fontSize: '8pt', fontWeight: '600', width: '45px' }}>Qté</th>
+                              <th style={{ padding: '8px 6px', textAlign: 'center', fontSize: '8pt', fontWeight: '600', width: '55px' }}>Unité</th>
+                              <th style={{ padding: '8px 6px', textAlign: 'right', fontSize: '8pt', fontWeight: '600', width: '85px' }}>Prix unit.</th>
+                              <th style={{ padding: '8px 6px', textAlign: 'right', fontSize: '8pt', fontWeight: '600', width: '85px' }}>Montant</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {validItems.length === 0 ? (
+                              <tr>
+                                <td colSpan={5} style={{ padding: '25px', textAlign: 'center', color: '#94a3b8', fontStyle: 'italic', backgroundColor: '#f8fafc', fontSize: '8pt' }}>
+                                  Aucun article ajouté
+                                </td>
+                              </tr>
+                            ) : (
+                              validItems.map((item, index) => (
+                                <tr key={index} style={{ borderBottom: '1px solid #e2e8f0', backgroundColor: index % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
+                                  <td style={{ padding: '8px 6px', color: '#1e293b', fontSize: '8pt' }}>
+                                    <p style={{ fontWeight: '600', margin: 0 }}>{item.productName}</p>
+                                    {item.description && (
+                                      <p style={{ color: '#64748b', fontSize: '7pt', margin: '2px 0 0 0', whiteSpace: 'pre-wrap', lineHeight: '1.3' }}>{item.description}</p>
+                                    )}
+                                  </td>
+                                  <td style={{ padding: '8px 6px', textAlign: 'center', color: '#1e293b', fontSize: '8pt' }}>{item.quantity}</td>
+                                  <td style={{ padding: '8px 6px', textAlign: 'center', color: '#1e293b', textTransform: 'capitalize', fontSize: '8pt' }}>{item.unit}</td>
+                                  <td style={{ padding: '8px 6px', textAlign: 'right', color: '#1e293b', fontSize: '8pt' }}>{formatCurrency(item.unitPrice, currency)}</td>
+                                  <td style={{ padding: '8px 6px', textAlign: 'right', color: '#1e293b', fontWeight: '600', fontSize: '8pt' }}>{formatCurrency(item.quantity * item.unitPrice, currency)}</td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+
+                        {/* Totals and Stamp Row - Compact */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '10px' }}>
+                          {/* Company Stamp */}
+                          <div style={{ textAlign: 'center' }}>
+                            <img
+                              src={tamponNtsagui}
+                              alt="Tampon NTSAGUI Digital"
+                              style={{ height: '70px', width: 'auto' }}
+                            />
+                          </div>
+
+                          {/* Totals Box - Compact */}
+                          <div style={{ width: '200px', backgroundColor: '#f8fafc', border: '1px solid #1e40af', borderRadius: '4px', overflow: 'hidden' }}>
+                            <div style={{ padding: '6px 10px', borderBottom: '1px solid #e2e8f0' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8pt' }}>
+                                <span style={{ color: '#64748b' }}>Sous-total:</span>
+                                <span style={{ color: '#1e293b' }}>{formatCurrency(calculateTotal(), currency)}</span>
+                              </div>
+                            </div>
+                            <div style={{ padding: '6px 10px', borderBottom: '1px solid #e2e8f0' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8pt' }}>
+                                <span style={{ color: '#64748b' }}>TVA (0%):</span>
+                                <span style={{ color: '#1e293b' }}>0,00</span>
+                              </div>
+                            </div>
+                            <div style={{ padding: '8px 10px', backgroundColor: '#1e40af' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9pt' }}>
+                                <span style={{ color: 'white', fontWeight: 'bold' }}>TOTAL:</span>
+                                <span style={{ color: 'white', fontWeight: 'bold' }}>{formatCurrency(calculateTotal(), currency)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Payment Info - Compact */}
+                        <div style={{ marginTop: '15px', padding: '8px 10px', backgroundColor: '#eff6ff', borderRadius: '4px', border: '1px solid #bfdbfe' }}>
+                          <p style={{ fontSize: '8pt', color: '#1e293b', margin: 0 }}>
+                            <strong>Montant à régler:</strong> {formatCurrency(calculateTotal(), currency)} avant le {formattedDueDate}
+                          </p>
+                          <p style={{ fontSize: '7pt', color: '#64748b', margin: '4px 0 0 0' }}>
+                            Paiement à réception de facture. Pénalités de retard: 1,5%/mois.
+                          </p>
+                        </div>
+
+                        {/* Footer - Legal info */}
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '15mm',
+                          left: '20mm',
+                          right: '20mm',
+                          borderTop: '1px solid #e2e8f0',
+                          paddingTop: '10px',
+                          textAlign: 'center',
+                          fontSize: '7pt',
+                          color: '#94a3b8'
+                        }}>
+                          <p style={{ margin: '2px 0' }}>{COMPANY_INFO.name} • {COMPANY_INFO.legalForm}</p>
+                          <p style={{ margin: '2px 0' }}>RCCM: {COMPANY_INFO.rccm} • NIF: {COMPANY_INFO.nif} • ANPI: {COMPANY_INFO.anpi}</p>
+                          <p style={{ margin: '2px 0' }}>{COMPANY_INFO.address}, {COMPANY_INFO.city} - {COMPANY_INFO.country} • {COMPANY_INFO.website}</p>
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
-
-                {/* Amount Due Banner */}
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    {formatCurrency(calculateTotal(), currency)} à payer avant le {formattedDueDate}
-                  </h2>
-                </div>
-
-                {/* Notes/Description */}
-                {notes && (
-                  <p className="text-gray-600 text-sm mb-6">{notes}</p>
-                )}
-
-                {/* Items Table - Minimal style with Unit column */}
-                <table className="w-full mb-6" style={{ fontSize: '9pt' }}>
-                  <thead>
-                    <tr className="border-b-2 border-gray-200">
-                      <th className="text-left py-2 text-gray-500 font-medium">Description</th>
-                      <th className="text-center py-2 text-gray-500 font-medium w-12">Qté</th>
-                      <th className="text-center py-2 text-gray-500 font-medium w-16">Unité</th>
-                      <th className="text-right py-2 text-gray-500 font-medium w-24">Prix unitaire</th>
-                      <th className="text-right py-2 text-gray-500 font-medium w-24">Montant</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.filter(item => item.productId).map((item, index) => (
-                      <tr key={index} className="border-b border-gray-100">
-                        <td className="py-3 text-gray-900 pr-2">
-                          <p className="font-semibold">{item.productName}</p>
-                          {item.description && (
-                            <p className="whitespace-pre-wrap leading-snug text-gray-600 mt-1">{item.description}</p>
-                          )}
-                        </td>
-                        <td className="py-3 text-center text-gray-900">{item.quantity}</td>
-                        <td className="py-3 text-center text-gray-900 capitalize">{item.unit}</td>
-                        <td className="py-3 text-right text-gray-900">{formatCurrency(item.unitPrice, currency)}</td>
-                        <td className="py-3 text-right text-gray-900">{formatCurrency(item.quantity * item.unitPrice, currency)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                {/* Totals - Right aligned, minimal */}
-                <div className="border-t-2 border-gray-200 pt-4">
-                  <div className="flex justify-end">
-                    <div className="w-72 text-sm">
-                      <div className="flex justify-between py-2">
-                        <span className="text-gray-500">Sous-total</span>
-                        <span className="text-gray-900">{formatCurrency(calculateTotal(), currency)}</span>
-                      </div>
-                      <div className="flex justify-between py-2">
-                        <span className="text-gray-500">Total</span>
-                        <span className="text-gray-900 font-semibold">{formatCurrency(calculateTotal(), currency)}</span>
-                      </div>
-                      <div className="flex justify-between py-3 border-t border-gray-900 mt-2">
-                        <span className="text-gray-900 font-bold">Montant dû</span>
-                        <span className="text-gray-900 font-bold">{formatCurrency(calculateTotal(), currency)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Footer - Legal info */}
-                <div className="mt-10 pt-6 border-t border-gray-100 text-xs text-gray-400">
-                  <p>{COMPANY_INFO.legalForm} • ANPI: {COMPANY_INFO.anpi}</p>
-                </div>
+                  </CardContent>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-    </div>
+
+      {/* Mobile Preview Modal/Sheet could be added here for better mobile UX */}
+    </div >
   );
 }

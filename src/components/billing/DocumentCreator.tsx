@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Plus, Trash2, Save, FileDown } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import tamponNtsagui from "@/assets/tampon-ntsagui.png";
 
 interface DocumentItem {
   productId: string;
@@ -46,7 +47,7 @@ const formatCurrency = (amount: number) => {
 };
 
 const getDocumentTitle = (type: string) => {
-  switch(type) {
+  switch (type) {
     case 'devis': return 'DEVIS';
     case 'commande': return 'BON DE COMMANDE';
     case 'facture': return 'FACTURE';
@@ -55,7 +56,7 @@ const getDocumentTitle = (type: string) => {
 };
 
 const getDocumentPrefix = (type: string) => {
-  switch(type) {
+  switch (type) {
     case 'devis': return 'DEV';
     case 'commande': return 'BC';
     case 'facture': return 'FA';
@@ -150,7 +151,7 @@ export function DocumentCreator({ type }: DocumentCreatorProps) {
   const updateItem = (index: number, field: keyof DocumentItem, value: any) => {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
-    
+
     if (field === 'productId' && value) {
       const product = products.find(p => p.id === value);
       if (product) {
@@ -158,7 +159,7 @@ export function DocumentCreator({ type }: DocumentCreatorProps) {
         newItems[index].description = product.name;
       }
     }
-    
+
     setItems(newItems);
   };
 
@@ -199,7 +200,7 @@ export function DocumentCreator({ type }: DocumentCreatorProps) {
         useCORS: true,
         logging: false
       });
-      
+
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -208,10 +209,10 @@ export function DocumentCreator({ type }: DocumentCreatorProps) {
       const imgHeight = canvas.height;
       const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
       const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      
+
       pdf.addImage(imgData, 'PNG', imgX, 0, imgWidth * ratio, imgHeight * ratio);
       pdf.save(`${docNumber}.pdf`);
-      
+
       toast.success('PDF généré avec succès !');
     } catch (error) {
       console.error('Erreur PDF:', error);
@@ -331,7 +332,7 @@ export function DocumentCreator({ type }: DocumentCreatorProps) {
                   </div>
                 </div>
               ))}
-              
+
               <div className="pt-4 border-t text-right">
                 <p className="text-2xl font-bold text-primary">Total: {formatCurrency(calculateTotal())}</p>
               </div>
@@ -436,9 +437,14 @@ export function DocumentCreator({ type }: DocumentCreatorProps) {
 
                 <div className="flex justify-between items-end pt-4 border-t mt-8">
                   <p className="text-xs text-muted-foreground">Gérant: {COMPANY_INFO.manager}</p>
-                  <div className="text-center">
-                    <p className="text-muted-foreground text-xs mb-8">Signature et cachet</p>
-                    <div className="border-t-2 border-primary w-40"></div>
+                  <div className="text-center flex flex-col items-center">
+                    <p className="text-muted-foreground text-xs mb-2">Signature et cachet</p>
+                    <img
+                      src={tamponNtsagui}
+                      alt="Tampon NTSAGUI Digital"
+                      className="h-20 w-auto opacity-90"
+                      style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))' }}
+                    />
                   </div>
                 </div>
               </div>

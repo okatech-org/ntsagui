@@ -17,6 +17,9 @@ interface ClientFormData {
   address: string;
   city: string;
   country: string;
+  rccm: string;
+  nif: string;
+  contact_name: string;
 }
 
 const initialFormData: ClientFormData = {
@@ -26,7 +29,10 @@ const initialFormData: ClientFormData = {
   phone: '',
   address: '',
   city: '',
-  country: 'Gabon'
+  country: 'Gabon',
+  rccm: '',
+  nif: '',
+  contact_name: ''
 };
 
 export function ClientsManager() {
@@ -99,7 +105,10 @@ export function ClientsManager() {
       phone: client.phone || '',
       address: client.address || '',
       city: client.city || '',
-      country: client.country || 'Gabon'
+      country: client.country || 'Gabon',
+      rccm: client.rccm || '',
+      nif: client.nif || '',
+      contact_name: client.contact_name || ''
     });
     setEditingId(client.id);
     setShowForm(true);
@@ -136,20 +145,38 @@ export function ClientsManager() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label>Nom complet *</Label>
+                  <Label>Raison sociale / Nom *</Label>
                   <Input
                     required
+                    placeholder="Centre Gabonais de l'Innovation (CGI)"
                     value={formData.name}
                     onChange={e => setFormData({ ...formData, name: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Entreprise</Label>
+                  <Label>RCCM</Label>
                   <Input
-                    value={formData.company}
-                    onChange={e => setFormData({ ...formData, company: e.target.value })}
+                    placeholder="GA-LBV-01-2024-B17-00045"
+                    value={formData.rccm}
+                    onChange={e => setFormData({ ...formData, rccm: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>NIF</Label>
+                  <Input
+                    placeholder="2024 0101 4129 E"
+                    value={formData.nif}
+                    onChange={e => setFormData({ ...formData, nif: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Contact (Personne)</Label>
+                  <Input
+                    placeholder="Landry Stéphane ZENG EYIDANGA"
+                    value={formData.contact_name}
+                    onChange={e => setFormData({ ...formData, contact_name: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
@@ -157,6 +184,7 @@ export function ClientsManager() {
                   <Input
                     type="email"
                     required
+                    placeholder="contact@cgi.ga"
                     value={formData.email}
                     onChange={e => setFormData({ ...formData, email: e.target.value })}
                   />
@@ -164,13 +192,15 @@ export function ClientsManager() {
                 <div className="space-y-2">
                   <Label>Téléphone</Label>
                   <Input
+                    placeholder="+241 XX XX XX XX"
                     value={formData.phone}
                     onChange={e => setFormData({ ...formData, phone: e.target.value })}
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 md:col-span-2">
                   <Label>Adresse</Label>
                   <Input
+                    placeholder="Quartier, BP..."
                     value={formData.address}
                     onChange={e => setFormData({ ...formData, address: e.target.value })}
                   />
@@ -178,6 +208,7 @@ export function ClientsManager() {
                 <div className="space-y-2">
                   <Label>Ville</Label>
                   <Input
+                    placeholder="Libreville"
                     value={formData.city}
                     onChange={e => setFormData({ ...formData, city: e.target.value })}
                   />
@@ -209,11 +240,11 @@ export function ClientsManager() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-primary text-primary-foreground">
-                  <TableHead className="text-primary-foreground">Nom</TableHead>
-                  <TableHead className="text-primary-foreground">Entreprise</TableHead>
+                  <TableHead className="text-primary-foreground">Raison sociale</TableHead>
+                  <TableHead className="text-primary-foreground">RCCM</TableHead>
+                  <TableHead className="text-primary-foreground">NIF</TableHead>
+                  <TableHead className="text-primary-foreground">Contact</TableHead>
                   <TableHead className="text-primary-foreground">Email</TableHead>
-                  <TableHead className="text-primary-foreground">Téléphone</TableHead>
-                  <TableHead className="text-primary-foreground">Ville</TableHead>
                   <TableHead className="text-primary-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -221,10 +252,10 @@ export function ClientsManager() {
                 {clients.map(client => (
                   <TableRow key={client.id}>
                     <TableCell className="font-medium">{client.name}</TableCell>
-                    <TableCell>{client.company || '-'}</TableCell>
+                    <TableCell className="text-xs font-mono">{(client as any).rccm || '-'}</TableCell>
+                    <TableCell className="text-xs font-mono">{(client as any).nif || '-'}</TableCell>
+                    <TableCell className="text-sm">{(client as any).contact_name || '-'}</TableCell>
                     <TableCell>{client.email}</TableCell>
-                    <TableCell>{client.phone || '-'}</TableCell>
-                    <TableCell>{client.city || '-'}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Button size="sm" variant="outline" onClick={() => handleEdit(client)}>
