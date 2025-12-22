@@ -144,12 +144,12 @@ export const generateInvoicePDF = async (
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(12);
   pdf.setTextColor(COLORS.primaryBlue);
-  pdf.text(COMPANY_INFO.name, margin + 7, y + 4);
+  pdf.text(COMPANY_INFO.name, margin + 15, y + 4);
   
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(7);
   pdf.setTextColor(COLORS.textGray);
-  pdf.text(COMPANY_INFO.tagline, margin + 7, y + 8);
+  pdf.text(COMPANY_INFO.tagline, margin + 15, y + 8);
 
   // Company info (right side)
   const rightX = pageWidth - margin;
