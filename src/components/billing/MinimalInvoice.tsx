@@ -795,8 +795,8 @@ export function MinimalInvoice() {
 
                         {/* Totals and Stamp Row - Compact */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '10px' }}>
-                          {/* Company Stamp - offset 25mm to the right */}
-                          <div style={{ textAlign: 'center', marginLeft: '25mm' }}>
+                          {/* Company Stamp */}
+                          <div style={{ textAlign: 'center' }}>
                             <img
                               src={tamponNtsagui}
                               alt="Tampon NTSAGUI Digital"
@@ -804,9 +804,9 @@ export function MinimalInvoice() {
                             />
                           </div>
 
-                          {/* QR Code for payment confirmation - aligned with stamp */}
+                          {/* QR Code for payment confirmation */}
                           {savedDocumentToken && (
-                            <div style={{ textAlign: 'center', padding: '6px', backgroundColor: 'white', borderRadius: '6px', border: '1px solid #e2e8f0', marginLeft: '10mm' }}>
+                            <div style={{ textAlign: 'center', padding: '6px', backgroundColor: 'white', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
                               <QRCodeSVG 
                                 value={getPublicInvoiceUrl(savedDocumentToken)} 
                                 size={65}
