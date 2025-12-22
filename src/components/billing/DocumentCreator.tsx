@@ -398,8 +398,9 @@ export function DocumentCreator({ type }: DocumentCreatorProps) {
                         <p className="text-foreground text-xs">{(client as any).contact_name}</p>
                       </>
                     )}
-                    <p className="text-foreground text-xs">eMail: {client.email}</p>
-                    {client.phone && <p className="text-foreground text-xs">Tél: {client.phone}</p>}
+                    <p className="text-foreground text-xs">
+                      {[client.email, client.phone].filter(Boolean).join(' / ')}
+                    </p>
                   </div>
                 )}
 
