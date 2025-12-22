@@ -795,8 +795,8 @@ export function MinimalInvoice() {
 
                         {/* Totals and Stamp Row - Compact */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '10px' }}>
-                          {/* Company Stamp */}
-                          <div style={{ textAlign: 'center' }}>
+                          {/* Company Stamp - offset 25mm to the right */}
+                          <div style={{ textAlign: 'center', marginLeft: '25mm' }}>
                             <img
                               src={tamponNtsagui}
                               alt="Tampon NTSAGUI Digital"

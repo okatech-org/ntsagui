@@ -411,11 +411,11 @@ export const generateInvoicePDF = async (
   const taxAmount = total - subtotal;
   const isTaxExempt = taxAmount === 0;
 
-  // Stamp (left)
+  // Stamp (left, offset 25mm to the right)
   if (stampImg) {
     const stampHeight = 25;
     const stampWidth = (stampImg.width / stampImg.height) * stampHeight;
-    pdf.addImage(stampImg, 'PNG', margin, y, stampWidth, stampHeight);
+    pdf.addImage(stampImg, 'PNG', margin + 25, y, stampWidth, stampHeight);
   }
 
   // Totals box (right)
