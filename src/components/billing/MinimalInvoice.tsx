@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Plus, Trash2, Save, FileDown } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import logoNtsagui from "@/assets/logo-ntsagui.png";
 
 interface InvoiceItem {
   productId: string;
@@ -374,9 +375,17 @@ export function MinimalInvoice() {
                 className="bg-white text-gray-900 p-8 rounded-lg border"
                 style={{ minHeight: '700px', fontFamily: 'system-ui, -apple-system, sans-serif' }}
               >
-                {/* Header */}
-                <h1 className="text-4xl font-light text-gray-900 mb-8">Invoice</h1>
-
+                {/* Header with Logo */}
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-4">
+                    <img src={logoNtsagui} alt="NTSAGUI Digital" className="h-16 w-auto" />
+                    <div>
+                      <h2 className="text-xl font-semibold text-gray-900">{COMPANY_INFO.name}</h2>
+                      <p className="text-gray-500 text-xs italic">{COMPANY_INFO.tagline}</p>
+                    </div>
+                  </div>
+                  <h1 className="text-4xl font-light text-gray-900">Invoice</h1>
+                </div>
                 {/* Invoice Meta */}
                 <div className="grid grid-cols-3 gap-8 mb-8 text-sm">
                   <div>
