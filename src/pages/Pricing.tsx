@@ -182,7 +182,7 @@ const Pricing = () => {
                                 <div className="px-6 pb-6 pt-0 opacity-70 leading-relaxed">
                                     {faq.a}
                                 </div>
-                                ,)}
+                            )}
                         </div>
                     ))}
                 </div>
