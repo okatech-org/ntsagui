@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Eye, Trash2, ArrowRight, CreditCard, Clock, CheckCircle, AlertCircle, UserCheck } from "lucide-react";
+import { Eye, Trash2, ArrowRight, CreditCard, Clock, CheckCircle, AlertCircle, UserCheck, Info } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('fr-FR', {
@@ -280,10 +281,48 @@ export function DocumentsList() {
                               )}
                             </div>
                             {doc.client_confirmed_payment && (
-                              <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                <UserCheck className="h-3 w-3" />
-                                Validé par client
-                              </div>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <button className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors cursor-pointer">
+                                    <UserCheck className="h-3 w-3" />
+                                    Validé par client
+                                    <Info className="h-3 w-3 ml-1" />
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-80">
+                                  <div className="space-y-2">
+                                    <h4 className="font-semibold text-sm flex items-center gap-2">
+                                      <UserCheck className="h-4 w-4 text-blue-600" />
+                                      Confirmation client
+                                    </h4>
+                                    <div className="text-sm space-y-1">
+                                      <p className="text-muted-foreground">
+                                        <span className="font-medium text-foreground">Date:</span>{' '}
+                                        {doc.client_confirmation_date 
+                                          ? new Date(doc.client_confirmation_date).toLocaleString('fr-FR', {
+                                              day: '2-digit',
+                                              month: '2-digit',
+                                              year: 'numeric',
+                                              hour: '2-digit',
+                                              minute: '2-digit'
+                                            })
+                                          : 'Non spécifiée'}
+                                      </p>
+                                      {doc.client_confirmation_note && (
+                                        <div>
+                                          <span className="font-medium text-foreground">Note:</span>
+                                          <p className="mt-1 p-2 bg-muted rounded text-muted-foreground italic">
+                                            "{doc.client_confirmation_note}"
+                                          </p>
+                                        </div>
+                                      )}
+                                      {!doc.client_confirmation_note && (
+                                        <p className="text-muted-foreground italic">Aucune note</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
                             )}
                           </div>
                         ) : (
