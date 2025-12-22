@@ -21,6 +21,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AdminLogin from "./pages/AdminLogin";
 import Admin from "./pages/Admin";
+import PublicInvoice from "./pages/PublicInvoice";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,9 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+
+              {/* Public Invoice Route (without Navigation/Footer) */}
+              <Route path="/invoice/:token" element={<PublicInvoice />} />
 
               {/* Public Auth Routes (without Navigation/Footer) */}
               <Route path="/login" element={<Login />} />
