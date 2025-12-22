@@ -11,11 +11,16 @@ import {
   AlertCircle,
   History,
   Bell,
-  Globe
+  Globe,
+  Database,
+  Upload,
+  CheckCircle2,
+  Loader2
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SettingsPanelProps {
   currentColors: any;
@@ -29,7 +34,9 @@ export const SettingsPanel = ({
   onLogout
 }: SettingsPanelProps) => {
   const { t, language, setLanguage } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'preferences' | 'history'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'preferences' | 'data' | 'history'>('profile');
+  const [migrating, setMigrating] = useState(false);
+  const [migrationResult, setMigrationResult] = useState<{ success: number; failed: number; skipped: number } | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -97,8 +104,119 @@ export const SettingsPanel = ({
     { id: 'profile' as const, label: t('admin.settings.profile'), icon: User },
     { id: 'password' as const, label: t('admin.settings.password'), icon: Lock },
     { id: 'preferences' as const, label: t('admin.settings.preferences'), icon: Globe },
+    { id: 'data' as const, label: 'Données', icon: Database },
     { id: 'history' as const, label: t('admin.settings.history'), icon: History }
   ];
+
+  const migrateLocalStorageToSupabase = async () => {
+    setMigrating(true);
+    setMigrationResult(null);
+    
+    try {
+      // Get leads from localStorage
+      const localLeads = localStorage.getItem('ntsagui_leads');
+      const localConversations = localStorage.getItem('ntsagui_conversations');
+      
+      if (!localLeads) {
+        toast.info('Aucun lead trouvé dans le localStorage');
+        setMigrating(false);
+        return;
+      }
+
+      const leads = JSON.parse(localLeads);
+      const conversations = localConversations ? JSON.parse(localConversations) : {};
+      
+      let success = 0;
+      let failed = 0;
+      let skipped = 0;
+
+      for (const lead of leads) {
+        try {
+          // Check if lead already exists in Supabase by email
+          const { data: existingLead } = await supabase
+            .from('leads')
+            .select('id')
+            .eq('email', lead.email)
+            .single();
+
+          if (existingLead) {
+            skipped++;
+            continue;
+          }
+
+          // Insert lead into Supabase
+          const { data: newLead, error: leadError } = await supabase
+            .from('leads')
+            .insert({
+              name: lead.name,
+              email: lead.email,
+              company: lead.company,
+              phone: lead.phone || null,
+              language: lead.language || 'FR',
+              status: lead.status || 'new'
+            })
+            .select()
+            .single();
+
+          if (leadError) {
+            console.error('Error inserting lead:', leadError);
+            failed++;
+            continue;
+          }
+
+          // Check if there's a conversation for this lead
+          const conversation = conversations[lead.id] || lead.conversation;
+          if (conversation && newLead) {
+            const { error: convError } = await supabase
+              .from('conversations')
+              .insert({
+                lead_id: newLead.id,
+                messages: Array.isArray(conversation) ? conversation : [],
+                phase: lead.currentPhase || 1,
+                compatibility_score: lead.fitScore || 0,
+                identified_need: lead.identifiedNeed || null,
+                report: lead.report || null
+              });
+
+            if (convError) {
+              console.error('Error inserting conversation:', convError);
+            }
+          }
+
+          success++;
+        } catch (err) {
+          console.error('Error migrating lead:', err);
+          failed++;
+        }
+      }
+
+      setMigrationResult({ success, failed, skipped });
+      
+      if (success > 0) {
+        toast.success(`Migration terminée: ${success} lead(s) importé(s)`);
+      }
+      if (skipped > 0) {
+        toast.info(`${skipped} lead(s) déjà existant(s) ignoré(s)`);
+      }
+      if (failed > 0) {
+        toast.error(`${failed} lead(s) n'ont pas pu être importés`);
+      }
+
+    } catch (error) {
+      console.error('Migration error:', error);
+      toast.error('Erreur lors de la migration');
+    } finally {
+      setMigrating(false);
+    }
+  };
+
+  const clearLocalStorage = () => {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer les données du localStorage ? Cette action est irréversible.')) {
+      localStorage.removeItem('ntsagui_leads');
+      localStorage.removeItem('ntsagui_conversations');
+      toast.success('Données localStorage supprimées');
+    }
+  };
 
   const auditLog = [
     { time: '10:45', action: 'Connexion', details: 'admin@okatech.fr' },
@@ -412,6 +530,115 @@ export const SettingsPanel = ({
                   <option value={25}>25</option>
                   <option value={50}>50</option>
                 </select>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Data Tab */}
+      {activeTab === 'data' && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl border p-6 space-y-6"
+          style={{
+            background: currentColors.cardBg,
+            borderColor: currentColors.borderColor
+          }}
+        >
+          <div>
+            <h3 className="text-xl font-bold mb-6" style={{ color: currentColors.textPrimary }}>
+              Migration des données
+            </h3>
+
+            <div className="space-y-4">
+              {/* Migration Section */}
+              <div className="p-4 rounded-lg border" style={{ borderColor: currentColors.borderColor }}>
+                <div className="flex items-center gap-3 mb-4">
+                  <Upload size={20} style={{ color: '#00D9FF' }} />
+                  <div>
+                    <p className="font-semibold" style={{ color: currentColors.textPrimary }}>
+                      Migrer les leads du localStorage
+                    </p>
+                    <p className="text-sm" style={{ color: currentColors.textMuted }}>
+                      Importer les anciens leads stockés localement vers la base de données
+                    </p>
+                  </div>
+                </div>
+
+                {migrationResult && (
+                  <div
+                    className="mb-4 p-4 rounded-lg flex items-start gap-3"
+                    style={{
+                      background: migrationResult.success > 0 ? '#10B981' + '20' : '#F59E0B' + '20',
+                      borderLeft: `4px solid ${migrationResult.success > 0 ? '#10B981' : '#F59E0B'}`
+                    }}
+                  >
+                    <CheckCircle2 size={20} style={{ color: migrationResult.success > 0 ? '#10B981' : '#F59E0B' }} />
+                    <div className="text-sm" style={{ color: currentColors.textPrimary }}>
+                      <p><strong>{migrationResult.success}</strong> lead(s) importé(s) avec succès</p>
+                      {migrationResult.skipped > 0 && <p><strong>{migrationResult.skipped}</strong> lead(s) déjà existant(s) ignoré(s)</p>}
+                      {migrationResult.failed > 0 && <p><strong>{migrationResult.failed}</strong> lead(s) en échec</p>}
+                    </div>
+                  </div>
+                )}
+
+                <Button
+                  onClick={migrateLocalStorageToSupabase}
+                  disabled={migrating}
+                  className="w-full rounded-lg font-semibold"
+                  style={{ background: '#00D9FF', color: '#000' }}
+                >
+                  {migrating ? (
+                    <>
+                      <Loader2 size={18} className="mr-2 animate-spin" />
+                      Migration en cours...
+                    </>
+                  ) : (
+                    <>
+                      <Database size={18} className="mr-2" />
+                      Lancer la migration
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* Clear localStorage Section */}
+              <div className="p-4 rounded-lg border" style={{ borderColor: currentColors.borderColor }}>
+                <div className="flex items-center gap-3 mb-4">
+                  <AlertCircle size={20} style={{ color: '#EF4444' }} />
+                  <div>
+                    <p className="font-semibold" style={{ color: currentColors.textPrimary }}>
+                      Nettoyer le localStorage
+                    </p>
+                    <p className="text-sm" style={{ color: currentColors.textMuted }}>
+                      Supprimer les données locales après migration (irréversible)
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={clearLocalStorage}
+                  variant="outline"
+                  className="w-full rounded-lg font-semibold text-red-500 border-red-500 hover:bg-red-500/10"
+                >
+                  Supprimer les données locales
+                </Button>
+              </div>
+
+              {/* Info Section */}
+              <div
+                className="p-4 rounded-lg"
+                style={{
+                  background: isDarkMode ? '#1e3a5f20' : '#f0f9ff',
+                  border: `1px solid ${isDarkMode ? '#1e3a5f' : '#bae6fd'}`
+                }}
+              >
+                <p className="text-sm" style={{ color: currentColors.textSecondary }}>
+                  <strong>Note:</strong> La migration vérifie les emails existants pour éviter les doublons. 
+                  Les leads déjà présents dans la base de données seront ignorés.
+                </p>
               </div>
             </div>
           </div>
