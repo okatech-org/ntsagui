@@ -306,9 +306,9 @@ export function MinimalInvoice() {
         </Button>
       </div>
 
-      <div className={`grid gap-6 ${showPreview ? 'xl:grid-cols-2' : 'grid-cols-1 max-w-3xl'}`}>
+      <div className={`grid gap-4 ${showPreview ? 'xl:grid-cols-[450px_1fr]' : 'grid-cols-1 max-w-3xl'}`}>
         {/* Form Section */}
-        <div className="space-y-6">
+        <div className="space-y-3">
           {/* Invoice Info Card */}
           <Card className="border-2 border-border/50 shadow-lg">
             <CardHeader className="pb-4">
@@ -319,20 +319,20 @@ export function MinimalInvoice() {
                 Informations de la facture
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Numéro de facture</Label>
+            <CardContent className="space-y-3 pb-3">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium">Numéro de facture</Label>
                   <Input
                     value={invoiceNumber}
                     onChange={e => setInvoiceNumber(e.target.value)}
-                    className="font-mono bg-muted/50"
+                    className="font-mono bg-muted/50 h-9 text-sm"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Devise</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium">Devise</Label>
                   <Select value={currency} onValueChange={setCurrency}>
-                    <SelectTrigger className="bg-muted/50">
+                    <SelectTrigger className="bg-muted/50 h-9 text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -343,32 +343,32 @@ export function MinimalInvoice() {
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Date d'émission</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium">Date d'émission</Label>
                   <Input
                     type="date"
                     value={issueDate}
                     onChange={e => setIssueDate(e.target.value)}
-                    className="bg-muted/50"
+                    className="bg-muted/50 h-9 text-sm"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Date d'échéance</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium">Date d'échéance</Label>
                   <Input
                     type="date"
                     value={dueDate}
                     onChange={e => setDueDate(e.target.value)}
-                    className="bg-muted/50"
+                    className="bg-muted/50 h-9 text-sm"
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">
                   Client <span className="text-destructive">*</span>
                 </Label>
                 <Select value={selectedClient} onValueChange={setSelectedClient}>
-                  <SelectTrigger className={`bg-muted/50 ${!selectedClient && 'border-dashed'}`}>
+                  <SelectTrigger className={`bg-muted/50 h-9 text-sm ${!selectedClient && 'border-dashed'}`}>
                     <SelectValue placeholder="Sélectionner un client..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -386,14 +386,14 @@ export function MinimalInvoice() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Notes (optionnel)</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Notes (optionnel)</Label>
                 <Textarea
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
-                  rows={2}
+                  rows={1}
                   placeholder="Conditions de paiement, mentions spéciales..."
-                  className="bg-muted/50 resize-none"
+                  className="bg-muted/50 resize-none text-sm"
                 />
               </div>
             </CardContent>
@@ -418,7 +418,7 @@ export function MinimalInvoice() {
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 pb-3">
               <AnimatePresence mode="popLayout">
                 {items.map((item, index) => (
                   <motion.div
@@ -427,7 +427,7 @@ export function MinimalInvoice() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.2 }}
-                    className="group relative p-4 bg-muted/30 rounded-xl border border-border/50 hover:border-primary/30 transition-all"
+                    className="group relative p-3 bg-muted/30 rounded-lg border border-border/50 hover:border-primary/30 transition-all"
                   >
                     {/* Article Number Badge */}
                     <div className="absolute -top-2 -left-2 h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shadow-md">
@@ -446,9 +446,9 @@ export function MinimalInvoice() {
                       </Button>
                     )}
 
-                    <div className="space-y-4 pt-2">
+                    <div className="space-y-3 pt-1">
                       {/* Product Selection */}
-                      <div className="space-y-2">
+                      <div className="space-y-1.5">
                         <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                           Produit/Service
                         </Label>
@@ -472,21 +472,21 @@ export function MinimalInvoice() {
                       </div>
 
                       {/* Description */}
-                      <div className="space-y-2">
+                      <div className="space-y-1.5">
                         <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                           Description
                         </Label>
                         <Textarea
                           value={item.description}
                           onChange={e => updateItem(index, 'description', e.target.value)}
-                          rows={2}
-                          className="text-sm bg-background resize-none"
+                          rows={1}
+                          className="text-xs bg-background resize-none"
                           placeholder="Détails de la prestation..."
                         />
                       </div>
 
                       {/* Quantity, Unit, Price Grid */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div className="grid grid-cols-4 gap-2">
                         <div className="space-y-1.5">
                           <Label className="text-xs font-medium text-muted-foreground">Qté</Label>
                           <Input
@@ -494,13 +494,13 @@ export function MinimalInvoice() {
                             min={1}
                             value={item.quantity}
                             onChange={e => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
-                            className="bg-background text-center"
+                            className="bg-background text-center h-9 text-sm"
                           />
                         </div>
                         <div className="space-y-1.5">
                           <Label className="text-xs font-medium text-muted-foreground">Unité</Label>
                           <Select value={item.unit} onValueChange={value => updateItem(index, 'unit', value)}>
-                            <SelectTrigger className="bg-background">
+                            <SelectTrigger className="bg-background h-9 text-xs">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -518,13 +518,13 @@ export function MinimalInvoice() {
                             step="0.01"
                             value={item.unitPrice}
                             onChange={e => updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
-                            className="bg-background"
+                            className="bg-background h-9 text-sm"
                           />
                         </div>
                         <div className="space-y-1.5">
                           <Label className="text-xs font-medium text-muted-foreground">Montant</Label>
-                          <div className="h-10 px-3 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-end">
-                            <span className="font-semibold text-primary text-sm">
+                          <div className="h-9 px-2 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-end">
+                            <span className="font-semibold text-primary text-xs">
                               {formatCurrency(item.quantity * item.unitPrice, currency)}
                             </span>
                           </div>
@@ -645,7 +645,7 @@ export function MinimalInvoice() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
-                    <div className="max-h-[calc(100vh-200px)] overflow-auto p-4 bg-neutral-100 dark:bg-neutral-800/50">
+                    <div className="max-h-[calc(100vh-180px)] overflow-auto p-6 bg-neutral-100 dark:bg-neutral-800/50">
                       <div
                         ref={previewRef}
                         className="mx-auto shadow-xl"
@@ -657,7 +657,7 @@ export function MinimalInvoice() {
                           fontSize: '9pt',
                           lineHeight: '1.3',
                           boxSizing: 'border-box',
-                          transform: 'scale(0.5)',
+                          transform: 'scale(0.65)',
                           transformOrigin: 'top center',
                           position: 'relative',
                           backgroundColor: '#ffffff',
