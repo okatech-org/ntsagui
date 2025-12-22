@@ -4,10 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Check, CreditCard, Download } from "lucide-react";
+import { Check, CreditCard, Download, Eye, Share2, Copy, Mail, MessageCircle } from "lucide-react";
 import logoNtsagui from "@/assets/logo-ntsagui.png";
 import tamponNtsagui from "@/assets/tampon-ntsagui.png";
 import html2canvas from "html2canvas";
@@ -64,6 +65,8 @@ export default function PublicInvoice() {
   const [confirmNote, setConfirmNote] = useState('');
   const [confirming, setConfirming] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("view");
   const invoiceRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -141,6 +144,27 @@ export default function PublicInvoice() {
 
   const getPublicInvoiceUrl = () => {
     return `${window.location.origin}/invoice/${token}`;
+  };
+
+  const copyLink = async () => {
+    const url = getPublicInvoiceUrl();
+    await navigator.clipboard.writeText(url);
+    setLinkCopied(true);
+    toast.success('Lien copié !');
+    setTimeout(() => setLinkCopied(false), 3000);
+  };
+
+  const shareViaWhatsApp = () => {
+    const url = getPublicInvoiceUrl();
+    const message = `Bonjour,\n\nVeuillez trouver ci-joint la facture N° ${document?.number}.\n\nConsultez et confirmez votre paiement ici : ${url}\n\nCordialement,\nNTSAGUI Digital`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+  };
+
+  const shareViaEmail = () => {
+    const url = getPublicInvoiceUrl();
+    const subject = `Facture N° ${document?.number} - NTSAGUI Digital`;
+    const body = `Bonjour,\n\nVeuillez trouver ci-joint la facture N° ${document?.number}.\n\nConsultez et confirmez votre paiement ici : ${url}\n\nCordialement,\nNTSAGUI Digital`;
+    window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
   };
 
   const exportToPDF = async () => {
@@ -224,228 +248,294 @@ export default function PublicInvoice() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted py-8 px-4">
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Download Button */}
-        <div className="flex justify-center print:hidden">
-          <Button onClick={exportToPDF} disabled={exporting} size="lg" className="gap-2">
-            {exporting ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                Génération...
-              </>
-            ) : (
-              <>
-                <Download className="h-5 w-5" />
-                Télécharger PDF
-              </>
-            )}
-          </Button>
-        </div>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-center">
+              {getDocumentTitle(document.type)} N° {document.number}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="view" className="flex items-center gap-2">
+                  <Eye className="h-4 w-4" />
+                  Aperçu
+                </TabsTrigger>
+                <TabsTrigger value="share" className="flex items-center gap-2">
+                  <Share2 className="h-4 w-4" />
+                  Partager
+                </TabsTrigger>
+              </TabsList>
 
-        {/* Invoice Preview - Same format as admin */}
-        <div className="bg-neutral-100 dark:bg-neutral-800/50 p-4 rounded-lg overflow-auto">
-          <div
-            ref={invoiceRef}
-            className="mx-auto shadow-xl"
-            style={{
-              width: '210mm',
-              minHeight: '297mm',
-              padding: '12mm 15mm 10mm 15mm',
-              fontFamily: 'Arial, Helvetica, sans-serif',
-              fontSize: '9pt',
-              lineHeight: '1.3',
-              boxSizing: 'border-box',
-              position: 'relative',
-              backgroundColor: '#ffffff',
-              color: '#111827'
-            }}
-          >
-            {/* PAID Watermark */}
-            {document.client_confirmed_payment && (
-              <div style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%) rotate(-35deg)',
-                fontSize: '120px',
-                fontWeight: 'bold',
-                color: 'rgba(34, 197, 94, 0.15)',
-                textTransform: 'uppercase',
-                letterSpacing: '20px',
-                pointerEvents: 'none',
-                zIndex: 1,
-                whiteSpace: 'nowrap'
-              }}>
-                PAYÉ
-              </div>
-            )}
-            {/* Header Row */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px', borderBottom: '2px solid #1e40af', paddingBottom: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <img src={logoNtsagui} alt="NTSAGUI Digital" style={{ height: '35px', width: 'auto' }} />
-                <div>
-                  <h2 style={{ fontSize: '14pt', fontWeight: 'bold', color: '#1e40af', margin: 0 }}>{COMPANY_INFO.name}</h2>
-                  <p style={{ fontSize: '7pt', color: '#64748b', margin: 0 }}>{COMPANY_INFO.tagline}</p>
+              <TabsContent value="view" className="mt-4">
+                {/* Invoice Preview */}
+                <div className="bg-neutral-100 dark:bg-neutral-800/50 p-4 rounded-lg overflow-auto">
+                  <div
+                    ref={invoiceRef}
+                    className="mx-auto shadow-xl"
+                    style={{
+                      width: '210mm',
+                      minHeight: '297mm',
+                      padding: '12mm 15mm 10mm 15mm',
+                      fontFamily: 'Arial, Helvetica, sans-serif',
+                      fontSize: '9pt',
+                      lineHeight: '1.3',
+                      boxSizing: 'border-box',
+                      transform: 'scale(0.55)',
+                      transformOrigin: 'top center',
+                      position: 'relative',
+                      backgroundColor: '#ffffff',
+                      color: '#111827'
+                    }}
+                  >
+                    {/* PAID Watermark */}
+                    {document.client_confirmed_payment && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%) rotate(-35deg)',
+                        fontSize: '120px',
+                        fontWeight: 'bold',
+                        color: 'rgba(34, 197, 94, 0.15)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '20px',
+                        pointerEvents: 'none',
+                        zIndex: 1,
+                        whiteSpace: 'nowrap'
+                      }}>
+                        PAYÉ
+                      </div>
+                    )}
+                    {/* Header Row */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px', borderBottom: '2px solid #1e40af', paddingBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <img src={logoNtsagui} alt="NTSAGUI Digital" style={{ height: '35px', width: 'auto' }} />
+                        <div>
+                          <h2 style={{ fontSize: '14pt', fontWeight: 'bold', color: '#1e40af', margin: 0 }}>{COMPANY_INFO.name}</h2>
+                          <p style={{ fontSize: '7pt', color: '#64748b', margin: 0 }}>{COMPANY_INFO.tagline}</p>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right', fontSize: '7pt', color: '#64748b', lineHeight: '1.4' }}>
+                        <p style={{ margin: 0 }}>{COMPANY_INFO.address}, {COMPANY_INFO.city} - {COMPANY_INFO.country}</p>
+                        <p style={{ margin: 0 }}>{COMPANY_INFO.phone} • {COMPANY_INFO.email}</p>
+                        <p style={{ margin: 0 }}>RCCM: {COMPANY_INFO.rccm} • NIF: {COMPANY_INFO.nif}</p>
+                      </div>
+                    </div>
+
+                    {/* Document Title */}
+                    <div style={{ textAlign: 'center', margin: '10px 0 15px 0' }}>
+                      <h1 style={{ fontSize: '18pt', fontWeight: 'bold', color: '#1e40af', margin: 0, letterSpacing: '1px' }}>{getDocumentTitle(document.type)}</h1>
+                    </div>
+
+                    {/* Invoice Info and Client */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '20px', marginBottom: '15px' }}>
+                      <div style={{ flex: 1, backgroundColor: '#f8fafc', padding: '10px', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
+                        <h3 style={{ fontSize: '8pt', fontWeight: 'bold', color: '#1e40af', margin: '0 0 6px 0', textTransform: 'uppercase' }}>Détails</h3>
+                        <div style={{ fontSize: '8pt' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+                            <span style={{ color: '#64748b' }}>N° {document.type === 'facture' ? 'Facture' : document.type === 'devis' ? 'Devis' : 'Document'}:</span>
+                            <span style={{ fontWeight: 'bold', color: '#1e293b' }}>{document.number}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+                            <span style={{ color: '#64748b' }}>Émis le:</span>
+                            <span style={{ color: '#1e293b' }}>{formattedIssueDate}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+                            <span style={{ color: '#64748b' }}>Échéance:</span>
+                            <span style={{ color: '#dc2626', fontWeight: 'bold' }}>{formattedDueDate}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ flex: 1, backgroundColor: '#f8fafc', padding: '10px', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
+                        <h3 style={{ fontSize: '8pt', fontWeight: 'bold', color: '#1e40af', margin: '0 0 6px 0', textTransform: 'uppercase' }}>Facturer à</h3>
+                        {client ? (
+                          <div style={{ fontSize: '8pt', lineHeight: '1.6' }}>
+                            <p style={{ fontWeight: 'bold', color: '#1e293b', margin: 0, fontSize: '9pt' }}>
+                              {client.name}{client.company && ` (${client.company})`}
+                            </p>
+                            {client.rccm && <p style={{ color: '#1e293b', margin: '3px 0 0 0', fontSize: '7pt' }}>RCCM: {client.rccm}</p>}
+                            {client.nif && <p style={{ color: '#1e293b', margin: '1px 0 0 0', fontSize: '7pt' }}>NIF: {client.nif}</p>}
+                            {client.contact_name && (
+                              <>
+                                <p style={{ color: '#1e293b', margin: '6px 0 0 0', fontSize: '7pt' }}>Contact:</p>
+                                <p style={{ color: '#1e293b', margin: '1px 0 0 0', fontSize: '7pt' }}>{client.contact_name}</p>
+                              </>
+                            )}
+                            {(client.address || client.city || client.country) && (
+                              <p style={{ color: '#1e293b', margin: '4px 0 0 0', fontSize: '7pt' }}>
+                                {[client.address, client.city, client.country].filter(Boolean).join(', ')}
+                              </p>
+                            )}
+                            <p style={{ color: '#1e293b', margin: '1px 0 0 0', fontSize: '7pt' }}>
+                              {[client.email, client.phone].filter(Boolean).join(' / ')}
+                            </p>
+                          </div>
+                        ) : (
+                          <p style={{ fontWeight: 'bold', color: '#1e293b', margin: 0 }}>{document.client_name}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Notes */}
+                    {document.notes && (
+                      <div style={{ backgroundColor: '#fef3c7', padding: '6px 10px', borderRadius: '4px', marginBottom: '12px', borderLeft: '3px solid #f59e0b' }}>
+                        <p style={{ fontSize: '8pt', color: '#92400e', margin: 0 }}>{document.notes}</p>
+                      </div>
+                    )}
+
+                    {/* Items Table */}
+                    <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '15px' }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#1e40af', color: 'white' }}>
+                          <th style={{ padding: '8px 6px', textAlign: 'left', fontSize: '8pt', fontWeight: '600' }}>Description</th>
+                          <th style={{ padding: '8px 6px', textAlign: 'center', fontSize: '8pt', fontWeight: '600', width: '45px' }}>Qté</th>
+                          <th style={{ padding: '8px 6px', textAlign: 'center', fontSize: '8pt', fontWeight: '600', width: '55px' }}>Unité</th>
+                          <th style={{ padding: '8px 6px', textAlign: 'right', fontSize: '8pt', fontWeight: '600', width: '85px' }}>Prix unit.</th>
+                          <th style={{ padding: '8px 6px', textAlign: 'right', fontSize: '8pt', fontWeight: '600', width: '85px' }}>Montant</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {items.map((item, index) => (
+                          <tr key={index} style={{ borderBottom: '1px solid #e2e8f0', backgroundColor: index % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
+                            <td style={{ padding: '8px 6px', color: '#1e293b', fontSize: '8pt' }}>
+                              <p style={{ fontWeight: '600', margin: 0 }}>{item.productName || item.description}</p>
+                              {item.description && item.productName && (
+                                <p style={{ color: '#64748b', fontSize: '7pt', margin: '2px 0 0 0', whiteSpace: 'pre-wrap', lineHeight: '1.3' }}>{item.description}</p>
+                              )}
+                            </td>
+                            <td style={{ padding: '8px 6px', textAlign: 'center', color: '#1e293b', fontSize: '8pt' }}>{item.quantity}</td>
+                            <td style={{ padding: '8px 6px', textAlign: 'center', color: '#1e293b', textTransform: 'capitalize', fontSize: '8pt' }}>{item.unit || 'unité'}</td>
+                            <td style={{ padding: '8px 6px', textAlign: 'right', color: '#1e293b', fontSize: '8pt' }}>{formatCurrency(item.unitPrice || item.price || 0)}</td>
+                            <td style={{ padding: '8px 6px', textAlign: 'right', color: '#1e293b', fontWeight: '600', fontSize: '8pt' }}>{formatCurrency((item.quantity || 0) * (item.unitPrice || item.price || 0))}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+
+                    {/* Totals and Stamp */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '10px' }}>
+                      <div style={{ textAlign: 'center', backgroundColor: 'transparent' }}>
+                        <img src={tamponNtsagui} alt="Tampon" style={{ height: '90px', width: 'auto', mixBlendMode: 'multiply' }} />
+                      </div>
+
+                      <div style={{ textAlign: 'center', padding: '6px', backgroundColor: 'white', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                        <QRCodeSVG value={getPublicInvoiceUrl()} size={65} level="M" />
+                        <p style={{ fontSize: '6pt', color: '#64748b', margin: '3px 0 0 0' }}>Scanner pour confirmer</p>
+                      </div>
+
+                      <div style={{ width: '200px', backgroundColor: '#f8fafc', border: '1px solid #1e40af', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ padding: '6px 10px', borderBottom: '1px solid #e2e8f0' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8pt' }}>
+                            <span style={{ color: '#64748b' }}>Sous-total HT:</span>
+                            <span style={{ color: '#1e293b' }}>{formatCurrency(subtotal)}</span>
+                          </div>
+                        </div>
+                        <div style={{ padding: '6px 10px', borderBottom: '1px solid #e2e8f0' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8pt' }}>
+                            <span style={{ color: '#64748b' }}>TVA ({isTaxExempt ? 'Exonéré' : '18%'}):</span>
+                            <span style={{ color: '#1e293b' }}>{formatCurrency(taxAmount)}</span>
+                          </div>
+                        </div>
+                        <div style={{ padding: '8px 10px', backgroundColor: '#1e40af' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9pt' }}>
+                            <span style={{ color: 'white', fontWeight: 'bold' }}>TOTAL {isTaxExempt ? '' : 'TTC'}:</span>
+                            <span style={{ color: 'white', fontWeight: 'bold' }}>{formatCurrency(total)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Payment Info */}
+                    <div style={{ marginTop: '15px', padding: '8px 10px', backgroundColor: '#eff6ff', borderRadius: '4px', border: '1px solid #bfdbfe' }}>
+                      <p style={{ fontSize: '8pt', color: '#1e293b', margin: 0 }}>
+                        <strong>Montant à régler:</strong> {formatCurrency(total)} avant le {formattedDueDate}
+                      </p>
+                      <p style={{ fontSize: '7pt', color: '#64748b', margin: '4px 0 0 0' }}>
+                        Paiement à réception de facture. Pénalités de retard: 1,5%/mois.
+                      </p>
+                    </div>
+
+                    {/* Footer */}
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '15mm',
+                      left: '20mm',
+                      right: '20mm',
+                      borderTop: '1px solid #e2e8f0',
+                      paddingTop: '10px',
+                      textAlign: 'center',
+                      fontSize: '7pt',
+                      color: '#94a3b8'
+                    }}>
+                      <p style={{ margin: '2px 0' }}>{COMPANY_INFO.name} • {COMPANY_INFO.legalForm}</p>
+                      <p style={{ margin: '2px 0' }}>RCCM: {COMPANY_INFO.rccm} • NIF: {COMPANY_INFO.nif} • ANPI: {COMPANY_INFO.anpi}</p>
+                      <p style={{ margin: '2px 0' }}>{COMPANY_INFO.address}, {COMPANY_INFO.city} - {COMPANY_INFO.country} • {COMPANY_INFO.website}</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div style={{ textAlign: 'right', fontSize: '7pt', color: '#64748b', lineHeight: '1.4' }}>
-                <p style={{ margin: 0 }}>{COMPANY_INFO.address}, {COMPANY_INFO.city} - {COMPANY_INFO.country}</p>
-                <p style={{ margin: 0 }}>{COMPANY_INFO.phone} • {COMPANY_INFO.email}</p>
-                <p style={{ margin: 0 }}>RCCM: {COMPANY_INFO.rccm} • NIF: {COMPANY_INFO.nif}</p>
-              </div>
-            </div>
 
-            {/* Document Title */}
-            <div style={{ textAlign: 'center', margin: '10px 0 15px 0' }}>
-              <h1 style={{ fontSize: '18pt', fontWeight: 'bold', color: '#1e40af', margin: 0, letterSpacing: '1px' }}>{getDocumentTitle(document.type)}</h1>
-            </div>
-
-            {/* Invoice Info and Client */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '20px', marginBottom: '15px' }}>
-              <div style={{ flex: 1, backgroundColor: '#f8fafc', padding: '10px', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
-                <h3 style={{ fontSize: '8pt', fontWeight: 'bold', color: '#1e40af', margin: '0 0 6px 0', textTransform: 'uppercase' }}>Détails</h3>
-                <div style={{ fontSize: '8pt' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
-                    <span style={{ color: '#64748b' }}>N° {document.type === 'facture' ? 'Facture' : document.type === 'devis' ? 'Devis' : 'Document'}:</span>
-                    <span style={{ fontWeight: 'bold', color: '#1e293b' }}>{document.number}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
-                    <span style={{ color: '#64748b' }}>Émis le:</span>
-                    <span style={{ color: '#1e293b' }}>{formattedIssueDate}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
-                    <span style={{ color: '#64748b' }}>Échéance:</span>
-                    <span style={{ color: '#dc2626', fontWeight: 'bold' }}>{formattedDueDate}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ flex: 1, backgroundColor: '#f8fafc', padding: '10px', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
-                <h3 style={{ fontSize: '8pt', fontWeight: 'bold', color: '#1e40af', margin: '0 0 6px 0', textTransform: 'uppercase' }}>Facturer à</h3>
-                {client ? (
-                  <div style={{ fontSize: '8pt', lineHeight: '1.6' }}>
-                    <p style={{ fontWeight: 'bold', color: '#1e293b', margin: 0, fontSize: '9pt' }}>
-                      {client.name}{client.company && ` (${client.company})`}
-                    </p>
-                    {client.rccm && <p style={{ color: '#1e293b', margin: '3px 0 0 0', fontSize: '7pt' }}>RCCM: {client.rccm}</p>}
-                    {client.nif && <p style={{ color: '#1e293b', margin: '1px 0 0 0', fontSize: '7pt' }}>NIF: {client.nif}</p>}
-                    {client.contact_name && (
+                {/* Download Button */}
+                <div className="flex justify-center mt-4">
+                  <Button onClick={exportToPDF} disabled={exporting} className="gap-2">
+                    {exporting ? (
                       <>
-                        <p style={{ color: '#1e293b', margin: '6px 0 0 0', fontSize: '7pt' }}>Contact:</p>
-                        <p style={{ color: '#1e293b', margin: '1px 0 0 0', fontSize: '7pt' }}>{client.contact_name}</p>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Génération...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4" />
+                        Télécharger PDF
                       </>
                     )}
-                    {(client.address || client.city || client.country) && (
-                      <p style={{ color: '#1e293b', margin: '4px 0 0 0', fontSize: '7pt' }}>
-                        {[client.address, client.city, client.country].filter(Boolean).join(', ')}
-                      </p>
-                    )}
-                    <p style={{ color: '#1e293b', margin: '1px 0 0 0', fontSize: '7pt' }}>
-                      {[client.email, client.phone].filter(Boolean).join(' / ')}
-                    </p>
-                  </div>
-                ) : (
-                  <p style={{ fontWeight: 'bold', color: '#1e293b', margin: 0 }}>{document.client_name}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Notes */}
-            {document.notes && (
-              <div style={{ backgroundColor: '#fef3c7', padding: '6px 10px', borderRadius: '4px', marginBottom: '12px', borderLeft: '3px solid #f59e0b' }}>
-                <p style={{ fontSize: '8pt', color: '#92400e', margin: 0 }}>{document.notes}</p>
-              </div>
-            )}
-
-            {/* Items Table */}
-            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '15px' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#1e40af', color: 'white' }}>
-                  <th style={{ padding: '8px 6px', textAlign: 'left', fontSize: '8pt', fontWeight: '600' }}>Description</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'center', fontSize: '8pt', fontWeight: '600', width: '45px' }}>Qté</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'center', fontSize: '8pt', fontWeight: '600', width: '55px' }}>Unité</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'right', fontSize: '8pt', fontWeight: '600', width: '85px' }}>Prix unit.</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'right', fontSize: '8pt', fontWeight: '600', width: '85px' }}>Montant</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item, index) => (
-                  <tr key={index} style={{ borderBottom: '1px solid #e2e8f0', backgroundColor: index % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
-                    <td style={{ padding: '8px 6px', color: '#1e293b', fontSize: '8pt' }}>
-                      <p style={{ fontWeight: '600', margin: 0 }}>{item.productName || item.description}</p>
-                      {item.description && item.productName && (
-                        <p style={{ color: '#64748b', fontSize: '7pt', margin: '2px 0 0 0', whiteSpace: 'pre-wrap', lineHeight: '1.3' }}>{item.description}</p>
-                      )}
-                    </td>
-                    <td style={{ padding: '8px 6px', textAlign: 'center', color: '#1e293b', fontSize: '8pt' }}>{item.quantity}</td>
-                    <td style={{ padding: '8px 6px', textAlign: 'center', color: '#1e293b', textTransform: 'capitalize', fontSize: '8pt' }}>{item.unit || 'unité'}</td>
-                    <td style={{ padding: '8px 6px', textAlign: 'right', color: '#1e293b', fontSize: '8pt' }}>{formatCurrency(item.unitPrice || item.price || 0)}</td>
-                    <td style={{ padding: '8px 6px', textAlign: 'right', color: '#1e293b', fontWeight: '600', fontSize: '8pt' }}>{formatCurrency((item.quantity || 0) * (item.unitPrice || item.price || 0))}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {/* Totals and Stamp */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '10px' }}>
-              <div style={{ textAlign: 'center', backgroundColor: 'transparent' }}>
-                <img src={tamponNtsagui} alt="Tampon" style={{ height: '90px', width: 'auto', mixBlendMode: 'multiply' }} />
-              </div>
-
-              <div style={{ textAlign: 'center', padding: '6px', backgroundColor: 'white', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-                <QRCodeSVG value={getPublicInvoiceUrl()} size={65} level="M" />
-                <p style={{ fontSize: '6pt', color: '#64748b', margin: '3px 0 0 0' }}>Scanner pour confirmer</p>
-              </div>
-
-              <div style={{ width: '200px', backgroundColor: '#f8fafc', border: '1px solid #1e40af', borderRadius: '4px', overflow: 'hidden' }}>
-                <div style={{ padding: '6px 10px', borderBottom: '1px solid #e2e8f0' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8pt' }}>
-                    <span style={{ color: '#64748b' }}>Sous-total HT:</span>
-                    <span style={{ color: '#1e293b' }}>{formatCurrency(subtotal)}</span>
-                  </div>
+                  </Button>
                 </div>
-                <div style={{ padding: '6px 10px', borderBottom: '1px solid #e2e8f0' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8pt' }}>
-                    <span style={{ color: '#64748b' }}>TVA ({isTaxExempt ? 'Exonéré' : '18%'}):</span>
-                    <span style={{ color: '#1e293b' }}>{formatCurrency(taxAmount)}</span>
-                  </div>
-                </div>
-                <div style={{ padding: '8px 10px', backgroundColor: '#1e40af' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9pt' }}>
-                    <span style={{ color: 'white', fontWeight: 'bold' }}>TOTAL {isTaxExempt ? '' : 'TTC'}:</span>
-                    <span style={{ color: 'white', fontWeight: 'bold' }}>{formatCurrency(total)}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+              </TabsContent>
 
-            {/* Payment Info */}
-            <div style={{ marginTop: '15px', padding: '8px 10px', backgroundColor: '#eff6ff', borderRadius: '4px', border: '1px solid #bfdbfe' }}>
-              <p style={{ fontSize: '8pt', color: '#1e293b', margin: 0 }}>
-                <strong>Montant à régler:</strong> {formatCurrency(total)} avant le {formattedDueDate}
-              </p>
-              <p style={{ fontSize: '7pt', color: '#64748b', margin: '4px 0 0 0' }}>
-                Paiement à réception de facture. Pénalités de retard: 1,5%/mois.
-              </p>
-            </div>
+              <TabsContent value="share" className="mt-4 space-y-4">
+                <div className="space-y-2">
+                  <Label>Lien du document</Label>
+                  <div className="flex gap-2">
+                    <Input 
+                      value={getPublicInvoiceUrl()} 
+                      readOnly 
+                      className="font-mono text-sm"
+                    />
+                    <Button variant="outline" onClick={copyLink} className="shrink-0">
+                      {linkCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Partagez ce lien pour permettre à d'autres de voir ce document.
+                  </p>
+                </div>
 
-            {/* Footer */}
-            <div style={{
-              position: 'absolute',
-              bottom: '15mm',
-              left: '20mm',
-              right: '20mm',
-              borderTop: '1px solid #e2e8f0',
-              paddingTop: '10px',
-              textAlign: 'center',
-              fontSize: '7pt',
-              color: '#94a3b8'
-            }}>
-              <p style={{ margin: '2px 0' }}>{COMPANY_INFO.name} • {COMPANY_INFO.legalForm}</p>
-              <p style={{ margin: '2px 0' }}>RCCM: {COMPANY_INFO.rccm} • NIF: {COMPANY_INFO.nif} • ANPI: {COMPANY_INFO.anpi}</p>
-              <p style={{ margin: '2px 0' }}>{COMPANY_INFO.address}, {COMPANY_INFO.city} - {COMPANY_INFO.country} • {COMPANY_INFO.website}</p>
-            </div>
-          </div>
-        </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <Button onClick={shareViaWhatsApp} variant="outline" className="gap-2 h-16 flex-col">
+                    <MessageCircle className="h-5 w-5 text-green-600" />
+                    <span>Partager via WhatsApp</span>
+                  </Button>
+                  <Button onClick={shareViaEmail} variant="outline" className="gap-2 h-16 flex-col">
+                    <Mail className="h-5 w-5 text-blue-600" />
+                    <span>Partager par Email</span>
+                  </Button>
+                </div>
+
+                <div className="p-4 bg-muted rounded-lg text-center">
+                  <p className="text-sm text-muted-foreground mb-3">QR Code du document</p>
+                  <div className="inline-block p-4 bg-white rounded-lg">
+                    <QRCodeSVG value={getPublicInvoiceUrl()} size={150} level="M" />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Scannez ce code pour accéder au document
+                  </p>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
 
         {/* Payment Confirmation */}
         <Card className={document.client_confirmed_payment ? 'border-green-500 bg-green-50 dark:bg-green-950/20' : ''}>
