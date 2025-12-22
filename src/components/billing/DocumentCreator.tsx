@@ -383,23 +383,23 @@ export function DocumentCreator({ type }: DocumentCreatorProps) {
                 {client && (
                   <div className="bg-muted p-4 rounded-lg mb-6">
                     <h4 className="font-bold text-primary mb-2">Client</h4>
-                    <p className="font-medium">{client.name}</p>
-                    {client.company && <p className="text-muted-foreground text-xs">{client.company}</p>}
+                    <p className="font-bold text-foreground">
+                      {client.name}{client.company && ` (${client.company})`}
+                    </p>
                     {(client as any).rccm && (
-                      <p className="text-muted-foreground text-xs">RCCM: {(client as any).rccm}</p>
+                      <p className="text-foreground text-xs">RCCM: {(client as any).rccm}</p>
                     )}
                     {(client as any).nif && (
-                      <p className="text-muted-foreground text-xs">NIF: {(client as any).nif}</p>
+                      <p className="text-foreground text-xs">NIF: {(client as any).nif}</p>
                     )}
                     {(client as any).contact_name && (
-                      <p className="text-muted-foreground text-xs mt-1">Contact: {(client as any).contact_name}</p>
+                      <>
+                        <p className="text-foreground text-xs mt-2">Contact:</p>
+                        <p className="text-foreground text-xs">{(client as any).contact_name}</p>
+                      </>
                     )}
-                    <p className="text-muted-foreground text-xs mt-1">
-                      {client.address && `${client.address}, `}
-                      {client.city && `${client.city}, `}
-                      {client.country}
-                    </p>
-                    <p className="text-muted-foreground text-xs">{client.email} {client.phone && `• ${client.phone}`}</p>
+                    <p className="text-foreground text-xs">eMail: {client.email}</p>
+                    {client.phone && <p className="text-foreground text-xs">Tél: {client.phone}</p>}
                   </div>
                 )}
 

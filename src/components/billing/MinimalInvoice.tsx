@@ -609,34 +609,38 @@ export function MinimalInvoice() {
                           <div style={{ flex: 1, backgroundColor: '#f8fafc', padding: '10px', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
                             <h3 style={{ fontSize: '8pt', fontWeight: 'bold', color: '#1e40af', margin: '0 0 6px 0', textTransform: 'uppercase' }}>Facturer à</h3>
                             {client ? (
-                              <div style={{ fontSize: '8pt', lineHeight: '1.5' }}>
-                                <p style={{ fontWeight: 'bold', color: '#1e293b', margin: 0, fontSize: '9pt' }}>{client.name}</p>
-                                {client.company && (
-                                  <p style={{ color: '#64748b', margin: '2px 0 0 0', fontSize: '7pt' }}>{client.company}</p>
-                                )}
+                              <div style={{ fontSize: '8pt', lineHeight: '1.6' }}>
+                                <p style={{ fontWeight: 'bold', color: '#1e293b', margin: 0, fontSize: '9pt' }}>
+                                  {client.name}{client.company && ` (${client.company})`}
+                                </p>
                                 {client.rccm && (
-                                  <p style={{ color: '#475569', margin: '3px 0 0 0', fontSize: '7pt', fontFamily: 'monospace' }}>
+                                  <p style={{ color: '#1e293b', margin: '3px 0 0 0', fontSize: '7pt' }}>
                                     RCCM: {client.rccm}
                                   </p>
                                 )}
                                 {client.nif && (
-                                  <p style={{ color: '#475569', margin: '1px 0 0 0', fontSize: '7pt', fontFamily: 'monospace' }}>
+                                  <p style={{ color: '#1e293b', margin: '1px 0 0 0', fontSize: '7pt' }}>
                                     NIF: {client.nif}
                                   </p>
                                 )}
                                 {client.contact_name && (
-                                  <p style={{ color: '#1e293b', margin: '4px 0 0 0', fontSize: '7pt' }}>
-                                    <strong>Contact:</strong> {client.contact_name}
-                                  </p>
+                                  <>
+                                    <p style={{ color: '#1e293b', margin: '6px 0 0 0', fontSize: '7pt' }}>
+                                      Contact:
+                                    </p>
+                                    <p style={{ color: '#1e293b', margin: '1px 0 0 0', fontSize: '7pt' }}>
+                                      {client.contact_name}
+                                    </p>
+                                  </>
                                 )}
-                                {(client.address || client.city) && (
-                                  <p style={{ color: '#64748b', margin: '3px 0 0 0', fontSize: '7pt' }}>
-                                    {client.address && `${client.address}, `}{client.city && `${client.city}`}{client.country && ` - ${client.country}`}
-                                  </p>
-                                )}
-                                <p style={{ color: '#64748b', margin: '2px 0 0 0', fontSize: '7pt' }}>
-                                  {client.email}{client.phone && ` • ${client.phone}`}
+                                <p style={{ color: '#1e293b', margin: '1px 0 0 0', fontSize: '7pt' }}>
+                                  eMail: {client.email}
                                 </p>
+                                {client.phone && (
+                                  <p style={{ color: '#1e293b', margin: '1px 0 0 0', fontSize: '7pt' }}>
+                                    Tél: {client.phone}
+                                  </p>
+                                )}
                               </div>
                             ) : (
                               <p style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '8pt', margin: 0 }}>Sélectionnez un client</p>
