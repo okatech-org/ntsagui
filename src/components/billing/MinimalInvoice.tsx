@@ -36,7 +36,7 @@ const COMPANY_INFO = {
 };
 
 const formatCurrency = (amount: number, currency = 'USD') => {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: currency,
     minimumFractionDigits: 2
@@ -207,8 +207,8 @@ export function MinimalInvoice() {
   };
 
   const client = getSelectedClient();
-  const formattedIssueDate = new Date(issueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-  const formattedDueDate = new Date(dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const formattedIssueDate = new Date(issueDate).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
+  const formattedDueDate = new Date(dueDate).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
 
   return (
     <div className="space-y-6">
@@ -384,20 +384,20 @@ export function MinimalInvoice() {
                       <p className="text-gray-500 text-xs italic">{COMPANY_INFO.tagline}</p>
                     </div>
                   </div>
-                  <h1 className="text-4xl font-light text-gray-900">Invoice</h1>
+                  <h1 className="text-4xl font-light text-gray-900">Facture</h1>
                 </div>
                 {/* Invoice Meta */}
                 <div className="grid grid-cols-3 gap-8 mb-8 text-sm">
                   <div>
-                    <p className="text-gray-500 font-medium mb-1">Invoice number</p>
+                    <p className="text-gray-500 font-medium mb-1">Numéro de facture</p>
                     <p className="text-gray-900">{invoiceNumber}</p>
                   </div>
                   <div>
-                    <p className="text-gray-500 font-medium mb-1">Date of issue</p>
+                    <p className="text-gray-500 font-medium mb-1">Date d'émission</p>
                     <p className="text-gray-900">{formattedIssueDate}</p>
                   </div>
                   <div>
-                    <p className="text-gray-500 font-medium mb-1">Date due</p>
+                    <p className="text-gray-500 font-medium mb-1">Date d'échéance</p>
                     <p className="text-gray-900">{formattedDueDate}</p>
                   </div>
                 </div>
@@ -421,7 +421,7 @@ export function MinimalInvoice() {
                   </div>
                   {client && (
                     <div>
-                      <p className="font-semibold text-gray-900 mb-2">Bill to</p>
+                      <p className="font-semibold text-gray-900 mb-2">Facturer à</p>
                       <p className="text-gray-900 font-medium">{client.name}</p>
                       {client.address && <p className="text-gray-600">{client.address}</p>}
                       {client.city && <p className="text-gray-600">{client.city}</p>}
@@ -435,7 +435,7 @@ export function MinimalInvoice() {
                 {/* Amount Due Banner */}
                 <div className="mb-6">
                   <h2 className="text-xl font-semibold text-gray-900">
-                    {formatCurrency(calculateTotal(), currency)} due {formattedDueDate}
+                    {formatCurrency(calculateTotal(), currency)} à payer avant le {formattedDueDate}
                   </h2>
                 </div>
 
@@ -449,9 +449,9 @@ export function MinimalInvoice() {
                   <thead>
                     <tr className="border-b border-gray-200">
                       <th className="text-left py-3 text-gray-500 font-medium">Description</th>
-                      <th className="text-center py-3 text-gray-500 font-medium w-16">Qty</th>
-                      <th className="text-right py-3 text-gray-500 font-medium w-24">Unit price</th>
-                      <th className="text-right py-3 text-gray-500 font-medium w-24">Amount</th>
+                      <th className="text-center py-3 text-gray-500 font-medium w-16">Qté</th>
+                      <th className="text-right py-3 text-gray-500 font-medium w-24">Prix unitaire</th>
+                      <th className="text-right py-3 text-gray-500 font-medium w-24">Montant</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -472,7 +472,7 @@ export function MinimalInvoice() {
                 <div className="flex justify-end">
                   <div className="w-64 text-sm">
                     <div className="flex justify-between py-2">
-                      <span className="text-gray-500">Subtotal</span>
+                      <span className="text-gray-500">Sous-total</span>
                       <span className="text-gray-900">{formatCurrency(calculateTotal(), currency)}</span>
                     </div>
                     <div className="flex justify-between py-2 border-t border-gray-200">
@@ -480,7 +480,7 @@ export function MinimalInvoice() {
                       <span className="text-gray-900">{formatCurrency(calculateTotal(), currency)}</span>
                     </div>
                     <div className="flex justify-between py-2 border-t border-gray-900 font-semibold">
-                      <span className="text-gray-900">Amount due</span>
+                      <span className="text-gray-900">Montant dû</span>
                       <span className="text-gray-900">{formatCurrency(calculateTotal(), currency)} {currency}</span>
                     </div>
                   </div>
