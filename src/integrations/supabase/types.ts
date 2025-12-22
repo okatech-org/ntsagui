@@ -28,6 +28,7 @@ export type Database = {
           nif: string | null
           phone: string | null
           rccm: string | null
+          tax_exempt: boolean
           updated_at: string
         }
         Insert: {
@@ -43,6 +44,7 @@ export type Database = {
           nif?: string | null
           phone?: string | null
           rccm?: string | null
+          tax_exempt?: boolean
           updated_at?: string
         }
         Update: {
@@ -58,6 +60,7 @@ export type Database = {
           nif?: string | null
           phone?: string | null
           rccm?: string | null
+          tax_exempt?: boolean
           updated_at?: string
         }
         Relationships: []

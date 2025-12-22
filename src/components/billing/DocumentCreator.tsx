@@ -171,6 +171,19 @@ export function DocumentCreator({ type }: DocumentCreatorProps) {
     return clients.find(c => c.id === selectedClient);
   };
 
+  const isTaxExempt = () => {
+    const client = getSelectedClient();
+    return (client as any)?.tax_exempt || false;
+  };
+
+  const getTaxAmount = () => {
+    return isTaxExempt() ? 0 : calculateTotal() * 0.18;
+  };
+
+  const getTotalTTC = () => {
+    return calculateTotal() + getTaxAmount();
+  };
+
   const resetForm = () => {
     setSelectedClient('');
     setItems([{ productId: '', quantity: 1, price: 0, description: '' }]);
@@ -437,12 +450,12 @@ export function DocumentCreator({ type }: DocumentCreatorProps) {
                       <span>{formatCurrency(calculateTotal())}</span>
                     </div>
                     <div className="flex justify-between py-1 border-b">
-                      <span>TVA (18%):</span>
-                      <span>{formatCurrency(calculateTotal() * 0.18)}</span>
+                      <span>TVA ({isTaxExempt() ? 'Exonéré' : '18%'}):</span>
+                      <span>{formatCurrency(getTaxAmount())}</span>
                     </div>
                     <div className="flex justify-between py-2 font-bold text-primary text-lg border-t-2 border-primary mt-2">
-                      <span>TOTAL TTC:</span>
-                      <span>{formatCurrency(calculateTotal() * 1.18)}</span>
+                      <span>TOTAL {isTaxExempt() ? '' : 'TTC'}:</span>
+                      <span>{formatCurrency(getTotalTTC())}</span>
                     </div>
                   </div>
                 </div>

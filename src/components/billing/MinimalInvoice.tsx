@@ -174,6 +174,19 @@ export function MinimalInvoice() {
     return clients.find(c => c.id === selectedClient);
   };
 
+  const isTaxExempt = () => {
+    const client = getSelectedClient();
+    return (client as any)?.tax_exempt || false;
+  };
+
+  const getTaxAmount = () => {
+    return isTaxExempt() ? 0 : calculateTotal() * 0.18;
+  };
+
+  const getTotalTTC = () => {
+    return calculateTotal() + getTaxAmount();
+  };
+
   const resetForm = () => {
     setSelectedClient('');
     setItems([{ productId: '', productName: '', quantity: 1, unitPrice: 0, description: '', unit: 'unité' }]);
@@ -713,14 +726,14 @@ export function MinimalInvoice() {
                             </div>
                             <div style={{ padding: '6px 10px', borderBottom: '1px solid #e2e8f0' }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8pt' }}>
-                                <span style={{ color: '#64748b' }}>TVA (18%):</span>
-                                <span style={{ color: '#1e293b' }}>{formatCurrency(calculateTotal() * 0.18, currency)}</span>
+                                <span style={{ color: '#64748b' }}>TVA ({isTaxExempt() ? 'Exonéré' : '18%'}):</span>
+                                <span style={{ color: '#1e293b' }}>{formatCurrency(getTaxAmount(), currency)}</span>
                               </div>
                             </div>
                             <div style={{ padding: '8px 10px', backgroundColor: '#1e40af' }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9pt' }}>
-                                <span style={{ color: 'white', fontWeight: 'bold' }}>TOTAL TTC:</span>
-                                <span style={{ color: 'white', fontWeight: 'bold' }}>{formatCurrency(calculateTotal() * 1.18, currency)}</span>
+                                <span style={{ color: 'white', fontWeight: 'bold' }}>TOTAL {isTaxExempt() ? '' : 'TTC'}:</span>
+                                <span style={{ color: 'white', fontWeight: 'bold' }}>{formatCurrency(getTotalTTC(), currency)}</span>
                               </div>
                             </div>
                           </div>
