@@ -804,9 +804,9 @@ export function MinimalInvoice() {
                             />
                           </div>
 
-                          {/* QR Code for payment confirmation */}
+                          {/* QR Code for payment confirmation - aligned with stamp */}
                           {savedDocumentToken && (
-                            <div style={{ textAlign: 'center', padding: '6px', backgroundColor: 'white', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                            <div style={{ textAlign: 'center', padding: '6px', backgroundColor: 'white', borderRadius: '6px', border: '1px solid #e2e8f0', marginLeft: '10mm' }}>
                               <QRCodeSVG 
                                 value={getPublicInvoiceUrl(savedDocumentToken)} 
                                 size={65}
