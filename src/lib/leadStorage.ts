@@ -69,6 +69,7 @@ class LeadStorageService {
       // Map to Lead interface
       return leads.map(lead => {
         const conv = conversations?.find(c => c.lead_id === lead.id);
+        const leadWithStatus = lead as typeof lead & { status?: string };
         return {
           id: lead.id,
           name: lead.name,
@@ -76,9 +77,7 @@ class LeadStorageService {
           company: lead.company,
           phone: lead.phone || undefined,
           createdAt: lead.created_at || new Date().toISOString(),
-          // Use status from leads table if available, fallback to 'new'
-          status: ((lead as unknown as { status?: string }).status || 'new') as Lead['status'],
-          // Conversation data
+          status: (leadWithStatus.status || 'new') as Lead['status'],
           conversation: (conv?.messages as Array<{ role: 'user' | 'assistant'; content: string }>) || [],
           report: conv?.report || '',
           fitScore: conv?.compatibility_score || 0,
@@ -108,6 +107,7 @@ class LeadStorageService {
         .eq('lead_id', id)
         .single();
 
+      const leadWithStatus = lead as typeof lead & { status?: string };
       return {
         id: lead.id,
         name: lead.name,
@@ -115,7 +115,7 @@ class LeadStorageService {
         company: lead.company,
         phone: lead.phone || undefined,
         createdAt: lead.created_at || new Date().toISOString(),
-        status: ((lead as unknown as { status?: string }).status || 'new') as Lead['status'],
+        status: (leadWithStatus.status || 'new') as Lead['status'],
         conversation: (conv?.messages as Array<{ role: 'user' | 'assistant'; content: string }>) || [],
         report: conv?.report || '',
         fitScore: conv?.compatibility_score || 0,
