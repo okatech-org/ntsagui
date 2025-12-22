@@ -19,36 +19,45 @@ export type Database = {
           address: string | null
           city: string | null
           company: string | null
+          contact_name: string | null
           country: string | null
           created_at: string
           email: string
           id: string
           name: string
+          nif: string | null
           phone: string | null
+          rccm: string | null
           updated_at: string
         }
         Insert: {
           address?: string | null
           city?: string | null
           company?: string | null
+          contact_name?: string | null
           country?: string | null
           created_at?: string
           email: string
           id?: string
           name: string
+          nif?: string | null
           phone?: string | null
+          rccm?: string | null
           updated_at?: string
         }
         Update: {
           address?: string | null
           city?: string | null
           company?: string | null
+          contact_name?: string | null
           country?: string | null
           created_at?: string
           email?: string
           id?: string
           name?: string
+          nif?: string | null
           phone?: string | null
+          rccm?: string | null
           updated_at?: string
         }
         Relationships: []
