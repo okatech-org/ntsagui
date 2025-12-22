@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,8 +6,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Check, FileText, Building2, Calendar, CreditCard } from "lucide-react";
+import { Check, FileText, Building2, Calendar, CreditCard, Download } from "lucide-react";
 import logoNtsagui from "@/assets/logo-ntsagui.png";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('fr-FR', {
@@ -43,6 +45,8 @@ export default function PublicInvoice() {
   const [loading, setLoading] = useState(true);
   const [confirmNote, setConfirmNote] = useState('');
   const [confirming, setConfirming] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const invoiceRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (token) {
@@ -148,17 +152,65 @@ export default function PublicInvoice() {
     }
   };
 
+  const exportToPDF = async () => {
+    if (!invoiceRef.current) return;
+    
+    setExporting(true);
+    try {
+      const canvas = await html2canvas(invoiceRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`${getDocumentTitle(document.type)}_${document.number}.pdf`);
+      
+      toast.success('PDF téléchargé avec succès !');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Erreur lors de la génération du PDF');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted py-8 px-4">
       <div className="max-w-3xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <img src={logoNtsagui} alt="NTSAGUI Digital" className="h-16 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-primary">
-            {getDocumentTitle(document.type)} N° {document.number}
-          </h1>
-          <p className="text-muted-foreground">Émise le {formatDate(document.date)}</p>
+        {/* Download Button */}
+        <div className="flex justify-end print:hidden">
+          <Button onClick={exportToPDF} disabled={exporting} variant="outline" className="gap-2">
+            {exporting ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                Génération...
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4" />
+                Télécharger PDF
+              </>
+            )}
+          </Button>
         </div>
+
+        {/* Printable Invoice Content */}
+        <div ref={invoiceRef} className="bg-white dark:bg-background p-6 rounded-lg">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <img src={logoNtsagui} alt="NTSAGUI Digital" className="h-16 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-primary">
+              {getDocumentTitle(document.type)} N° {document.number}
+            </h1>
+            <p className="text-muted-foreground">Émise le {formatDate(document.date)}</p>
+          </div>
 
         {/* Document Info */}
         <Card>
@@ -235,6 +287,7 @@ export default function PublicInvoice() {
             </div>
           </CardContent>
         </Card>
+        </div>
 
         {/* Payment Confirmation */}
         <Card className={document.client_confirmed_payment ? 'border-green-500 bg-green-50 dark:bg-green-950/20' : ''}>
