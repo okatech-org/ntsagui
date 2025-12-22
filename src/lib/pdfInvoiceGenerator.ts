@@ -59,7 +59,7 @@ const formatCurrency = (amount: number): string => {
     style: 'decimal',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
-  }).format(amount) + ' XAF';
+  }).format(amount).replace(/\s/g, ' ') + ' FCFA';
 };
 
 const formatDate = (dateString: string): string => {
@@ -119,7 +119,7 @@ export const generateInvoicePDF = async (
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
   const margin = 15;
-  let y = 15;
+  let y = 12;
 
   // Load images
   let logoImg: HTMLImageElement | null = null;
@@ -135,100 +135,102 @@ export const generateInvoicePDF = async (
   // === HEADER ===
   // Logo
   if (logoImg) {
-    const logoHeight = 12;
+    const logoHeight = 10;
     const logoWidth = (logoImg.width / logoImg.height) * logoHeight;
     pdf.addImage(logoImg, 'PNG', margin, y, logoWidth, logoHeight);
   }
 
   // Company name and tagline
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(14);
+  pdf.setFontSize(12);
   pdf.setTextColor(COLORS.primaryBlue);
-  pdf.text(COMPANY_INFO.name, margin + 35, y + 5);
+  pdf.text(COMPANY_INFO.name, margin + 28, y + 4);
   
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(7);
   pdf.setTextColor(COLORS.textGray);
-  pdf.text(COMPANY_INFO.tagline, margin + 35, y + 10);
+  pdf.text(COMPANY_INFO.tagline, margin + 28, y + 8);
 
   // Company info (right side)
   const rightX = pageWidth - margin;
   pdf.setFontSize(7);
   pdf.setTextColor(COLORS.textGray);
-  pdf.text(`${COMPANY_INFO.address}, ${COMPANY_INFO.city} - ${COMPANY_INFO.country}`, rightX, y + 3, { align: 'right' });
-  pdf.text(`${COMPANY_INFO.phone} • ${COMPANY_INFO.email}`, rightX, y + 7, { align: 'right' });
-  pdf.text(`RCCM: ${COMPANY_INFO.rccm} • NIF: ${COMPANY_INFO.nif}`, rightX, y + 11, { align: 'right' });
+  pdf.text(`${COMPANY_INFO.address}, ${COMPANY_INFO.city} - ${COMPANY_INFO.country}`, rightX, y + 2, { align: 'right' });
+  pdf.text(`${COMPANY_INFO.phone} • ${COMPANY_INFO.email}`, rightX, y + 6, { align: 'right' });
+  pdf.text(`RCCM: ${COMPANY_INFO.rccm} • NIF: ${COMPANY_INFO.nif}`, rightX, y + 10, { align: 'right' });
 
   // Blue line under header
-  y += 16;
+  y += 14;
   pdf.setDrawColor(COLORS.primaryBlue);
   pdf.setLineWidth(0.5);
   pdf.line(margin, y, pageWidth - margin, y);
 
   // === DOCUMENT TITLE ===
-  y += 12;
+  y += 10;
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(18);
+  pdf.setFontSize(16);
   pdf.setTextColor(COLORS.primaryBlue);
   pdf.text(getDocumentTitle(document.type), pageWidth / 2, y, { align: 'center' });
 
   // === PAID WATERMARK ===
   if (document.client_confirmed_payment) {
     pdf.saveGraphicsState();
-    pdf.setFontSize(80);
+    pdf.setFontSize(70);
     pdf.setTextColor('#22c55e');
-    // @ts-ignore - GState exists in jsPDF
+    // @ts-ignore
     if (pdf.GState) {
       // @ts-ignore
-      pdf.setGState(new pdf.GState({ opacity: 0.15 }));
+      pdf.setGState(new pdf.GState({ opacity: 0.12 }));
     }
-    
-    const centerX = pageWidth / 2;
-    const centerY = pageHeight / 2;
-    
-    pdf.text('PAYÉ', centerX, centerY, {
-      align: 'center',
-      angle: 35
-    });
+    pdf.text('PAYÉ', pageWidth / 2, pageHeight / 2, { align: 'center', angle: 35 });
     pdf.restoreGraphicsState();
   }
 
   // === INFO BOXES ===
-  y += 10;
-  const boxWidth = (pageWidth - margin * 2 - 10) / 2;
-  const boxHeight = 35;
+  y += 8;
+  const boxWidth = (pageWidth - margin * 2 - 8) / 2;
+  
+  // Calculate client box height dynamically
+  let clientInfoLines = 1;
+  if (client) {
+    if (client.rccm) clientInfoLines++;
+    if (client.nif) clientInfoLines++;
+    if (client.contact_name) clientInfoLines += 2;
+    if (client.address || client.city || client.country) clientInfoLines++;
+    if (client.email || client.phone) clientInfoLines++;
+  }
+  const boxHeight = Math.max(28, 14 + clientInfoLines * 4);
 
   // Details box (left)
   pdf.setFillColor(COLORS.lightGray);
   pdf.setDrawColor(COLORS.borderGray);
-  pdf.roundedRect(margin, y, boxWidth, boxHeight, 2, 2, 'FD');
+  pdf.roundedRect(margin, y, boxWidth, boxHeight, 1, 1, 'FD');
 
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(8);
   pdf.setTextColor(COLORS.primaryBlue);
-  pdf.text('DÉTAILS', margin + 5, y + 6);
+  pdf.text('DÉTAILS', margin + 4, y + 5);
+
+  const detailsLeftX = margin + 4;
+  const detailsRightX = margin + boxWidth - 4;
+  let detailY = y + 12;
 
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(8);
-  
-  const detailsLeftX = margin + 5;
-  const detailsRightX = margin + boxWidth - 5;
-  let detailY = y + 13;
-
   pdf.setTextColor(COLORS.textGray);
-  pdf.text(`N° ${document.type === 'facture' ? 'Facture' : document.type === 'devis' ? 'Devis' : 'Document'}:`, detailsLeftX, detailY);
+  pdf.text('N° Facture:', detailsLeftX, detailY);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(COLORS.textDark);
   pdf.text(document.number, detailsRightX, detailY, { align: 'right' });
 
-  detailY += 6;
+  detailY += 5;
   pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(COLORS.textGray);
   pdf.text('Émis le:', detailsLeftX, detailY);
   pdf.setTextColor(COLORS.textDark);
   pdf.text(formatDate(document.date), detailsRightX, detailY, { align: 'right' });
 
-  detailY += 6;
+  detailY += 5;
   pdf.setTextColor(COLORS.textGray);
   pdf.text('Échéance:', detailsLeftX, detailY);
   pdf.setFont('helvetica', 'bold');
@@ -236,159 +238,172 @@ export const generateInvoicePDF = async (
   pdf.text(document.payment_due_date ? formatDate(document.payment_due_date) : 'Non spécifiée', detailsRightX, detailY, { align: 'right' });
 
   // Client box (right)
-  const clientBoxX = margin + boxWidth + 10;
+  const clientBoxX = margin + boxWidth + 8;
   pdf.setFillColor(COLORS.lightGray);
   pdf.setDrawColor(COLORS.borderGray);
-  pdf.roundedRect(clientBoxX, y, boxWidth, boxHeight, 2, 2, 'FD');
+  pdf.roundedRect(clientBoxX, y, boxWidth, boxHeight, 1, 1, 'FD');
 
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(8);
   pdf.setTextColor(COLORS.primaryBlue);
-  pdf.text('FACTURER À', clientBoxX + 5, y + 6);
+  pdf.text('FACTURER À', clientBoxX + 4, y + 5);
 
-  pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(8);
-  let clientY = y + 13;
+  let clientY = y + 12;
 
   if (client) {
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(9);
     pdf.setTextColor(COLORS.textDark);
     const clientName = client.name + (client.company ? ` (${client.company})` : '');
-    pdf.text(clientName, clientBoxX + 5, clientY);
+    pdf.text(clientName, clientBoxX + 4, clientY);
     clientY += 5;
 
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(7);
     
     if (client.rccm) {
-      pdf.text(`RCCM: ${client.rccm}`, clientBoxX + 5, clientY);
+      pdf.text(`RCCM: ${client.rccm}`, clientBoxX + 4, clientY);
       clientY += 4;
     }
     if (client.nif) {
-      pdf.text(`NIF: ${client.nif}`, clientBoxX + 5, clientY);
+      pdf.text(`NIF: ${client.nif}`, clientBoxX + 4, clientY);
       clientY += 4;
     }
     if (client.contact_name) {
-      pdf.text(`Contact: ${client.contact_name}`, clientBoxX + 5, clientY);
+      clientY += 1;
+      pdf.text('Contact:', clientBoxX + 4, clientY);
+      clientY += 4;
+      pdf.text(client.contact_name, clientBoxX + 4, clientY);
       clientY += 4;
     }
     const addressParts = [client.address, client.city, client.country].filter(Boolean);
     if (addressParts.length > 0) {
-      pdf.text(addressParts.join(', '), clientBoxX + 5, clientY);
+      pdf.text(addressParts.join(', '), clientBoxX + 4, clientY);
       clientY += 4;
     }
     const contactParts = [client.email, client.phone].filter(Boolean);
     if (contactParts.length > 0) {
-      pdf.text(contactParts.join(' / '), clientBoxX + 5, clientY);
+      pdf.text(contactParts.join(' / '), clientBoxX + 4, clientY);
     }
   } else {
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(COLORS.textDark);
-    pdf.text(document.client_name, clientBoxX + 5, clientY);
+    pdf.text(document.client_name, clientBoxX + 4, clientY);
   }
 
-  y += boxHeight + 8;
+  y += boxHeight + 6;
 
   // === NOTES ===
   if (document.notes) {
     pdf.setFillColor(COLORS.yellow);
     pdf.setDrawColor(COLORS.orange);
-    pdf.roundedRect(margin, y, pageWidth - margin * 2, 10, 2, 2, 'FD');
-    pdf.setDrawColor(COLORS.orange);
-    pdf.setLineWidth(0.8);
-    pdf.line(margin, y, margin, y + 10);
+    pdf.roundedRect(margin, y, pageWidth - margin * 2, 8, 1, 1, 'FD');
+    pdf.setLineWidth(0.6);
+    pdf.line(margin, y, margin, y + 8);
     
-    pdf.setFontSize(8);
+    pdf.setFontSize(7);
     pdf.setTextColor('#92400e');
-    pdf.text(document.notes, margin + 5, y + 6);
-    y += 14;
+    pdf.text(document.notes, margin + 4, y + 5);
+    y += 12;
   }
 
   // === ITEMS TABLE ===
-  const colWidths = {
-    desc: 75,
-    qty: 15,
-    unit: 20,
-    price: 30,
-    amount: 30
-  };
   const tableWidth = pageWidth - margin * 2;
-  const rowHeight = 8;
-
+  const colDesc = 95;
+  const colQty = 15;
+  const colUnit = 20;
+  const colPrice = 25;
+  const colAmount = tableWidth - colDesc - colQty - colUnit - colPrice;
+  
   // Table header
   pdf.setFillColor(COLORS.primaryBlue);
-  pdf.rect(margin, y, tableWidth, rowHeight, 'F');
+  pdf.rect(margin, y, tableWidth, 7, 'F');
   
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(8);
   pdf.setTextColor(COLORS.white);
   
-  let colX = margin + 3;
-  pdf.text('Description', colX, y + 5.5);
-  colX += colWidths.desc;
-  pdf.text('Qté', colX + colWidths.qty / 2, y + 5.5, { align: 'center' });
-  colX += colWidths.qty;
-  pdf.text('Unité', colX + colWidths.unit / 2, y + 5.5, { align: 'center' });
-  colX += colWidths.unit;
-  pdf.text('Prix unit.', colX + colWidths.price - 3, y + 5.5, { align: 'right' });
-  colX += colWidths.price;
-  pdf.text('Montant', colX + colWidths.amount - 3, y + 5.5, { align: 'right' });
+  let headerX = margin + 3;
+  pdf.text('Description', headerX, y + 4.5);
+  headerX += colDesc;
+  pdf.text('Qté', headerX + colQty / 2, y + 4.5, { align: 'center' });
+  headerX += colQty;
+  pdf.text('Unité', headerX + colUnit / 2, y + 4.5, { align: 'center' });
+  headerX += colUnit;
+  pdf.text('Prix unit.', headerX + colPrice - 2, y + 4.5, { align: 'right' });
+  headerX += colPrice;
+  pdf.text('Montant', headerX + colAmount - 3, y + 4.5, { align: 'right' });
 
-  y += rowHeight;
+  y += 7;
 
   // Table rows
   const items = Array.isArray(document.items) ? document.items : [];
+  
   items.forEach((item, index) => {
-    const itemRowHeight = item.description && item.productName ? 12 : 8;
+    const productName = item.productName || item.description || '';
+    const description = item.productName && item.description ? item.description : '';
+    
+    // Calculate row height based on description
+    let descLines: string[] = [];
+    if (description) {
+      descLines = pdf.splitTextToSize(description, colDesc - 6);
+    }
+    const rowHeight = description ? Math.max(12, 8 + descLines.length * 3.5) : 8;
     
     // Alternating row background
     if (index % 2 === 1) {
       pdf.setFillColor(COLORS.lightGray);
-      pdf.rect(margin, y, tableWidth, itemRowHeight, 'F');
+      pdf.rect(margin, y, tableWidth, rowHeight, 'F');
     }
     
     // Row border
     pdf.setDrawColor(COLORS.borderGray);
     pdf.setLineWidth(0.2);
-    pdf.line(margin, y + itemRowHeight, margin + tableWidth, y + itemRowHeight);
+    pdf.line(margin, y + rowHeight, margin + tableWidth, y + rowHeight);
 
+    // Product name
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(8);
     pdf.setTextColor(COLORS.textDark);
+    pdf.text(productName, margin + 3, y + 5);
     
-    colX = margin + 3;
-    pdf.text(item.productName || item.description || '', colX, y + 5);
-    
-    if (item.description && item.productName) {
+    // Description (multi-line)
+    if (descLines.length > 0) {
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(7);
       pdf.setTextColor(COLORS.textGray);
-      const descLines = pdf.splitTextToSize(item.description, colWidths.desc - 5);
-      pdf.text(descLines[0] || '', colX, y + 9);
+      let descY = y + 9;
+      descLines.forEach((line: string) => {
+        pdf.text(line, margin + 3, descY);
+        descY += 3.5;
+      });
     }
 
+    // Other columns - vertically centered
+    const centerY = y + rowHeight / 2 + 1;
+    
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(8);
     pdf.setTextColor(COLORS.textDark);
     
-    colX += colWidths.desc;
-    pdf.text(String(item.quantity), colX + colWidths.qty / 2, y + 5, { align: 'center' });
+    let colX = margin + colDesc;
+    pdf.text(String(item.quantity), colX + colQty / 2, centerY, { align: 'center' });
     
-    colX += colWidths.qty;
-    pdf.text(item.unit || 'unité', colX + colWidths.unit / 2, y + 5, { align: 'center' });
+    colX += colQty;
+    const unitText = (item.unit || 'Unité').charAt(0).toUpperCase() + (item.unit || 'Unité').slice(1);
+    pdf.text(unitText, colX + colUnit / 2, centerY, { align: 'center' });
     
-    colX += colWidths.unit;
-    pdf.text(formatCurrency(item.unitPrice || item.price || 0), colX + colWidths.price - 3, y + 5, { align: 'right' });
+    colX += colUnit;
+    pdf.text(formatCurrency(item.unitPrice || item.price || 0), colX + colPrice - 2, centerY, { align: 'right' });
     
-    colX += colWidths.price;
+    colX += colPrice;
     pdf.setFont('helvetica', 'bold');
-    pdf.text(formatCurrency((item.quantity || 0) * (item.unitPrice || item.price || 0)), colX + colWidths.amount - 3, y + 5, { align: 'right' });
+    pdf.text(formatCurrency((item.quantity || 0) * (item.unitPrice || item.price || 0)), colX + colAmount - 3, centerY, { align: 'right' });
 
-    y += itemRowHeight;
+    y += rowHeight;
   });
 
-  y += 10;
+  y += 8;
 
   // === STAMP AND TOTALS ===
   const subtotal = Number(document.subtotal) || 0;
@@ -398,74 +413,74 @@ export const generateInvoicePDF = async (
 
   // Stamp (left)
   if (stampImg) {
-    const stampHeight = 30;
+    const stampHeight = 25;
     const stampWidth = (stampImg.width / stampImg.height) * stampHeight;
     pdf.addImage(stampImg, 'PNG', margin, y, stampWidth, stampHeight);
   }
 
   // Totals box (right)
-  const totalsBoxWidth = 60;
+  const totalsBoxWidth = 55;
   const totalsBoxX = pageWidth - margin - totalsBoxWidth;
   const totalsBoxY = y;
 
   pdf.setFillColor(COLORS.lightGray);
   pdf.setDrawColor(COLORS.primaryBlue);
-  pdf.roundedRect(totalsBoxX, totalsBoxY, totalsBoxWidth, 25, 2, 2, 'FD');
+  pdf.roundedRect(totalsBoxX, totalsBoxY, totalsBoxWidth, 22, 1, 1, 'FD');
 
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(8);
   pdf.setTextColor(COLORS.textGray);
-  pdf.text('Sous-total HT:', totalsBoxX + 3, totalsBoxY + 6);
+  pdf.text('Sous-total HT:', totalsBoxX + 3, totalsBoxY + 5);
   pdf.setTextColor(COLORS.textDark);
-  pdf.text(formatCurrency(subtotal), totalsBoxX + totalsBoxWidth - 3, totalsBoxY + 6, { align: 'right' });
+  pdf.text(formatCurrency(subtotal), totalsBoxX + totalsBoxWidth - 3, totalsBoxY + 5, { align: 'right' });
 
   pdf.setDrawColor(COLORS.borderGray);
-  pdf.line(totalsBoxX, totalsBoxY + 8.5, totalsBoxX + totalsBoxWidth, totalsBoxY + 8.5);
+  pdf.line(totalsBoxX, totalsBoxY + 7.5, totalsBoxX + totalsBoxWidth, totalsBoxY + 7.5);
 
   pdf.setTextColor(COLORS.textGray);
-  pdf.text(`TVA (${isTaxExempt ? 'Exonéré' : '18%'}):`, totalsBoxX + 3, totalsBoxY + 14);
+  pdf.text(`TVA (${isTaxExempt ? 'Exonéré' : '18%'}):`, totalsBoxX + 3, totalsBoxY + 12);
   pdf.setTextColor(COLORS.textDark);
-  pdf.text(formatCurrency(taxAmount), totalsBoxX + totalsBoxWidth - 3, totalsBoxY + 14, { align: 'right' });
+  pdf.text(formatCurrency(taxAmount), totalsBoxX + totalsBoxWidth - 3, totalsBoxY + 12, { align: 'right' });
 
   // Total row with blue background
   pdf.setFillColor(COLORS.primaryBlue);
-  pdf.rect(totalsBoxX, totalsBoxY + 17, totalsBoxWidth, 8, 'F');
+  pdf.rect(totalsBoxX, totalsBoxY + 15, totalsBoxWidth, 7, 'F');
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(9);
   pdf.setTextColor(COLORS.white);
-  pdf.text(`TOTAL ${isTaxExempt ? '' : 'TTC'}:`, totalsBoxX + 3, totalsBoxY + 22);
-  pdf.text(formatCurrency(total), totalsBoxX + totalsBoxWidth - 3, totalsBoxY + 22, { align: 'right' });
+  pdf.text(`TOTAL ${isTaxExempt ? '' : 'TTC'}:`, totalsBoxX + 3, totalsBoxY + 19.5);
+  pdf.text(formatCurrency(total), totalsBoxX + totalsBoxWidth - 3, totalsBoxY + 19.5, { align: 'right' });
 
-  y += 35;
+  y += 30;
 
   // === PAYMENT INFO ===
   pdf.setFillColor(COLORS.lightBlue);
   pdf.setDrawColor(COLORS.lightBlueBorder);
-  pdf.roundedRect(margin, y, pageWidth - margin * 2, 12, 2, 2, 'FD');
+  pdf.roundedRect(margin, y, pageWidth - margin * 2, 10, 1, 1, 'FD');
 
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(8);
   pdf.setTextColor(COLORS.textDark);
-  pdf.text(`Montant à régler: ${formatCurrency(total)} avant le ${document.payment_due_date ? formatDate(document.payment_due_date) : 'Non spécifiée'}`, margin + 5, y + 5);
+  pdf.text(`Montant à régler: ${formatCurrency(total)} avant le ${document.payment_due_date ? formatDate(document.payment_due_date) : 'Non spécifiée'}`, margin + 4, y + 4);
   
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(7);
   pdf.setTextColor(COLORS.textGray);
-  pdf.text('Paiement à réception de facture. Pénalités de retard: 1,5%/mois.', margin + 5, y + 10);
+  pdf.text('Paiement à réception de facture. Pénalités de retard: 1,5%/mois.', margin + 4, y + 8);
 
   // === FOOTER ===
-  const footerY = pageHeight - 20;
+  const footerY = pageHeight - 18;
   pdf.setDrawColor(COLORS.borderGray);
-  pdf.setLineWidth(0.3);
+  pdf.setLineWidth(0.2);
   pdf.line(margin + 10, footerY, pageWidth - margin - 10, footerY);
 
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(7);
   pdf.setTextColor(COLORS.footerGray);
   
-  pdf.text(`${COMPANY_INFO.name} • ${COMPANY_INFO.legalForm}`, pageWidth / 2, footerY + 5, { align: 'center' });
-  pdf.text(`RCCM: ${COMPANY_INFO.rccm} • NIF: ${COMPANY_INFO.nif} • ANPI: ${COMPANY_INFO.anpi}`, pageWidth / 2, footerY + 9, { align: 'center' });
-  pdf.text(`${COMPANY_INFO.address}, ${COMPANY_INFO.city} - ${COMPANY_INFO.country} • ${COMPANY_INFO.website}`, pageWidth / 2, footerY + 13, { align: 'center' });
+  pdf.text(`${COMPANY_INFO.name} • ${COMPANY_INFO.legalForm}`, pageWidth / 2, footerY + 4, { align: 'center' });
+  pdf.text(`RCCM: ${COMPANY_INFO.rccm} • NIF: ${COMPANY_INFO.nif} • ANPI: ${COMPANY_INFO.anpi}`, pageWidth / 2, footerY + 8, { align: 'center' });
+  pdf.text(`${COMPANY_INFO.address}, ${COMPANY_INFO.city} - ${COMPANY_INFO.country} • ${COMPANY_INFO.website}`, pageWidth / 2, footerY + 12, { align: 'center' });
 
   // Save
   pdf.save(`${getDocumentTitle(document.type)}-${document.number}.pdf`);
