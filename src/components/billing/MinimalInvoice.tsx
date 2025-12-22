@@ -20,14 +20,18 @@ interface InvoiceItem {
 }
 
 const COMPANY_INFO = {
-  name: "OKA TECH",
-  address: "Quartier Ambowé, derrière station TOTAL",
+  name: "NTSAGUI Digital",
+  tagline: "Intelligence Artificielle & Machine Learning",
+  address: "Batterie IV - BP 638",
   city: "Libreville",
   country: "Gabon",
   phone: "+241 77 51 14 85",
-  email: "admin@okatech.fr",
-  rccm: "GA-LBV-01-2024-B17-00123",
-  nif: "2024 0501 6789 T"
+  email: "contact@ntsagui.com",
+  website: "www.ntsagui.com",
+  legalForm: "SARL au Capital de 5 000 000 FCFA",
+  rccm: "GA-LBV-01-2025-B12-01029",
+  nif: "2025 0102 2429 R",
+  anpi: "ANPI24208339150I1"
 };
 
 const formatCurrency = (amount: number, currency = 'USD') => {
@@ -392,13 +396,19 @@ export function MinimalInvoice() {
                 {/* Company and Client Info */}
                 <div className="grid grid-cols-2 gap-8 mb-8 text-sm">
                   <div>
-                    <p className="font-semibold text-gray-900 mb-2">{COMPANY_INFO.name}</p>
+                    <p className="font-semibold text-gray-900 mb-1">{COMPANY_INFO.name}</p>
+                    <p className="text-gray-500 text-xs italic mb-2">{COMPANY_INFO.tagline}</p>
                     <p className="text-gray-600">{COMPANY_INFO.address}</p>
                     <p className="text-gray-600">{COMPANY_INFO.city}, {COMPANY_INFO.country}</p>
                     <p className="text-gray-600">{COMPANY_INFO.phone}</p>
                     <p className="text-gray-600">{COMPANY_INFO.email}</p>
-                    <p className="text-gray-500 text-xs mt-2">RCCM: {COMPANY_INFO.rccm}</p>
-                    <p className="text-gray-500 text-xs">NIF: {COMPANY_INFO.nif}</p>
+                    <p className="text-gray-600">{COMPANY_INFO.website}</p>
+                    <div className="mt-2 pt-2 border-t border-gray-100">
+                      <p className="text-gray-500 text-xs">{COMPANY_INFO.legalForm}</p>
+                      <p className="text-gray-500 text-xs">RCCM: {COMPANY_INFO.rccm}</p>
+                      <p className="text-gray-500 text-xs">NIF: {COMPANY_INFO.nif}</p>
+                      <p className="text-gray-500 text-xs">ANPI: {COMPANY_INFO.anpi}</p>
+                    </div>
                   </div>
                   {client && (
                     <div>
