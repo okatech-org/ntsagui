@@ -474,7 +474,7 @@ export function DocumentCreator({ type }: DocumentCreatorProps) {
                     <img
                       src={tamponNtsagui}
                       alt="Tampon NTSAGUI Digital"
-                      className="h-20 w-auto opacity-90"
+                      className="h-24 w-auto opacity-90"
                       style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))' }}
                     />
                   </div>

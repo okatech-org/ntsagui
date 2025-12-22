@@ -708,7 +708,7 @@ export function MinimalInvoice() {
                             <img
                               src={tamponNtsagui}
                               alt="Tampon NTSAGUI Digital"
-                              style={{ height: '70px', width: 'auto' }}
+                              style={{ height: '90px', width: 'auto' }}
                             />
                           </div>
 
