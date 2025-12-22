@@ -385,12 +385,21 @@ export function DocumentCreator({ type }: DocumentCreatorProps) {
                     <h4 className="font-bold text-primary mb-2">Client</h4>
                     <p className="font-medium">{client.name}</p>
                     {client.company && <p className="text-muted-foreground text-xs">{client.company}</p>}
-                    <p className="text-muted-foreground text-xs">
+                    {(client as any).rccm && (
+                      <p className="text-muted-foreground text-xs">RCCM: {(client as any).rccm}</p>
+                    )}
+                    {(client as any).nif && (
+                      <p className="text-muted-foreground text-xs">NIF: {(client as any).nif}</p>
+                    )}
+                    {(client as any).contact_name && (
+                      <p className="text-muted-foreground text-xs mt-1">Contact: {(client as any).contact_name}</p>
+                    )}
+                    <p className="text-muted-foreground text-xs mt-1">
                       {client.address && `${client.address}, `}
                       {client.city && `${client.city}, `}
                       {client.country}
                     </p>
-                    <p className="text-muted-foreground text-xs">{client.email} • {client.phone}</p>
+                    <p className="text-muted-foreground text-xs">{client.email} {client.phone && `• ${client.phone}`}</p>
                   </div>
                 )}
 

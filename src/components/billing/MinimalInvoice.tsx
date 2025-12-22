@@ -610,15 +610,33 @@ export function MinimalInvoice() {
                             <h3 style={{ fontSize: '8pt', fontWeight: 'bold', color: '#1e40af', margin: '0 0 6px 0', textTransform: 'uppercase' }}>Facturer à</h3>
                             {client ? (
                               <div style={{ fontSize: '8pt', lineHeight: '1.5' }}>
-                                <p style={{ fontWeight: 'bold', color: '#1e293b', margin: 0 }}>{client.name}</p>
-                                {(client as any).rccm && <p style={{ color: '#64748b', margin: 0, fontSize: '7pt' }}>RCCM: {(client as any).rccm}</p>}
-                                {(client as any).nif && <p style={{ color: '#64748b', margin: 0, fontSize: '7pt' }}>NIF: {(client as any).nif}</p>}
-                                {(client as any).contact_name && (
-                                  <p style={{ color: '#1e293b', margin: '4px 0 0 0', fontSize: '7pt' }}>
-                                    Contact: {(client as any).contact_name}
+                                <p style={{ fontWeight: 'bold', color: '#1e293b', margin: 0, fontSize: '9pt' }}>{client.name}</p>
+                                {client.company && (
+                                  <p style={{ color: '#64748b', margin: '2px 0 0 0', fontSize: '7pt' }}>{client.company}</p>
+                                )}
+                                {client.rccm && (
+                                  <p style={{ color: '#475569', margin: '3px 0 0 0', fontSize: '7pt', fontFamily: 'monospace' }}>
+                                    RCCM: {client.rccm}
                                   </p>
                                 )}
-                                <p style={{ color: '#64748b', margin: '2px 0 0 0', fontSize: '7pt' }}>{client.email}</p>
+                                {client.nif && (
+                                  <p style={{ color: '#475569', margin: '1px 0 0 0', fontSize: '7pt', fontFamily: 'monospace' }}>
+                                    NIF: {client.nif}
+                                  </p>
+                                )}
+                                {client.contact_name && (
+                                  <p style={{ color: '#1e293b', margin: '4px 0 0 0', fontSize: '7pt' }}>
+                                    <strong>Contact:</strong> {client.contact_name}
+                                  </p>
+                                )}
+                                {(client.address || client.city) && (
+                                  <p style={{ color: '#64748b', margin: '3px 0 0 0', fontSize: '7pt' }}>
+                                    {client.address && `${client.address}, `}{client.city && `${client.city}`}{client.country && ` - ${client.country}`}
+                                  </p>
+                                )}
+                                <p style={{ color: '#64748b', margin: '2px 0 0 0', fontSize: '7pt' }}>
+                                  {client.email}{client.phone && ` • ${client.phone}`}
+                                </p>
                               </div>
                             ) : (
                               <p style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '8pt', margin: 0 }}>Sélectionnez un client</p>
