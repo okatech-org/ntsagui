@@ -55,9 +55,12 @@ const formatCurrency = (amount: number, currency = 'XAF') => {
   }).format(amount);
 };
 
+type PDFQuality = 'standard' | 'high';
+
 export function InvoiceViewEditDialog({ document: doc, open, onOpenChange }: InvoiceViewEditDialogProps) {
   const [activeTab, setActiveTab] = useState<string>("view");
   const [linkCopied, setLinkCopied] = useState(false);
+  const [pdfQuality, setPdfQuality] = useState<PDFQuality>('high');
   const [editData, setEditData] = useState({
     notes: doc?.notes || '',
     payment_due_date: doc?.payment_due_date || '',
@@ -144,15 +147,17 @@ export function InvoiceViewEditDialog({ document: doc, open, onOpenChange }: Inv
     window.open(`mailto:${client?.email || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
   };
 
-  const exportToPDF = async () => {
+  const exportToPDF = async (quality: PDFQuality = pdfQuality) => {
     if (!previewRef.current) {
       toast.error("Erreur lors de la génération du PDF");
       return;
     }
 
+    const scale = quality === 'high' ? 4 : 2;
+
     try {
       const canvas = await html2canvas(previewRef.current, {
-        scale: 4,
+        scale,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
@@ -165,7 +170,7 @@ export function InvoiceViewEditDialog({ document: doc, open, onOpenChange }: Inv
         orientation: 'p',
         unit: 'mm',
         format: 'a4',
-        compress: false
+        compress: quality === 'standard'
       });
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -174,7 +179,7 @@ export function InvoiceViewEditDialog({ document: doc, open, onOpenChange }: Inv
       const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
       const imgX = (pdfWidth - imgWidth * ratio) / 2;
 
-      pdf.addImage(imgData, 'PNG', imgX, 0, imgWidth * ratio, imgHeight * ratio, undefined, 'FAST');
+      pdf.addImage(imgData, 'PNG', imgX, 0, imgWidth * ratio, imgHeight * ratio, undefined, quality === 'high' ? 'FAST' : 'MEDIUM');
       pdf.save(`Facture-${doc.number}.pdf`);
 
       toast.success('PDF généré avec succès !');
@@ -236,6 +241,26 @@ export function InvoiceViewEditDialog({ document: doc, open, onOpenChange }: Inv
                   color: '#111827'
                 }}
               >
+                {/* PAID Watermark */}
+                {doc.client_confirmed_payment && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%) rotate(-35deg)',
+                    fontSize: '120px',
+                    fontWeight: 'bold',
+                    color: 'rgba(34, 197, 94, 0.15)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '20px',
+                    pointerEvents: 'none',
+                    zIndex: 1,
+                    whiteSpace: 'nowrap'
+                  }}>
+                    PAYÉ
+                  </div>
+                )}
+                
                 {/* Header Row */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px', borderBottom: '2px solid #1e40af', paddingBottom: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -407,8 +432,17 @@ export function InvoiceViewEditDialog({ document: doc, open, onOpenChange }: Inv
               </div>
             </div>
 
-            <div className="flex justify-center gap-2 mt-4">
-              <Button onClick={exportToPDF} className="gap-2">
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-3 mt-4">
+              <Select value={pdfQuality} onValueChange={(v) => setPdfQuality(v as PDFQuality)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Qualité PDF" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="standard">Standard (rapide)</SelectItem>
+                  <SelectItem value="high">Haute définition</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button onClick={() => exportToPDF()} className="gap-2">
                 <FileDown className="h-4 w-4" />
                 Télécharger PDF
               </Button>

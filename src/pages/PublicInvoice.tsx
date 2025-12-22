@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Check, CreditCard, Download } from "lucide-react";
+import { Check, CreditCard, Download, Settings2 } from "lucide-react";
 import logoNtsagui from "@/assets/logo-ntsagui.png";
 import tamponNtsagui from "@/assets/tampon-ntsagui.png";
 import html2canvas from "html2canvas";
@@ -55,6 +56,8 @@ interface DocumentItem {
   unit?: string;
 }
 
+type PDFQuality = 'standard' | 'high';
+
 export default function PublicInvoice() {
   const { token } = useParams<{ token: string }>();
   const [document, setDocument] = useState<any>(null);
@@ -63,6 +66,7 @@ export default function PublicInvoice() {
   const [confirmNote, setConfirmNote] = useState('');
   const [confirming, setConfirming] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [pdfQuality, setPdfQuality] = useState<PDFQuality>('high');
   const invoiceRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -142,13 +146,15 @@ export default function PublicInvoice() {
     return `${window.location.origin}/invoice/${token}`;
   };
 
-  const exportToPDF = async () => {
+  const exportToPDF = async (quality: PDFQuality = pdfQuality) => {
     if (!invoiceRef.current) return;
     
     setExporting(true);
+    const scale = quality === 'high' ? 4 : 2;
+    
     try {
       const canvas = await html2canvas(invoiceRef.current, {
-        scale: 4,
+        scale,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
@@ -161,7 +167,7 @@ export default function PublicInvoice() {
         orientation: 'p',
         unit: 'mm',
         format: 'a4',
-        compress: false
+        compress: quality === 'standard'
       });
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -170,7 +176,7 @@ export default function PublicInvoice() {
       const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
       const imgX = (pdfWidth - imgWidth * ratio) / 2;
       
-      pdf.addImage(imgData, 'PNG', imgX, 0, imgWidth * ratio, imgHeight * ratio, undefined, 'FAST');
+      pdf.addImage(imgData, 'PNG', imgX, 0, imgWidth * ratio, imgHeight * ratio, undefined, quality === 'high' ? 'FAST' : 'MEDIUM');
       pdf.save(`${getDocumentTitle(document.type)}_${document.number}.pdf`);
       
       toast.success('PDF téléchargé avec succès !');
@@ -221,9 +227,21 @@ export default function PublicInvoice() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted py-8 px-4">
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Download Button */}
-        <div className="flex justify-center gap-4 print:hidden">
-          <Button onClick={exportToPDF} disabled={exporting} size="lg" className="gap-2">
+        {/* Download Options */}
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 print:hidden">
+          <div className="flex items-center gap-2">
+            <Settings2 className="h-4 w-4 text-muted-foreground" />
+            <Select value={pdfQuality} onValueChange={(v) => setPdfQuality(v as PDFQuality)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Qualité PDF" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="standard">Standard (rapide)</SelectItem>
+                <SelectItem value="high">Haute définition</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Button onClick={() => exportToPDF()} disabled={exporting} size="lg" className="gap-2">
             {exporting ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -256,6 +274,25 @@ export default function PublicInvoice() {
               color: '#111827'
             }}
           >
+            {/* PAID Watermark */}
+            {document.client_confirmed_payment && (
+              <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%) rotate(-35deg)',
+                fontSize: '120px',
+                fontWeight: 'bold',
+                color: 'rgba(34, 197, 94, 0.15)',
+                textTransform: 'uppercase',
+                letterSpacing: '20px',
+                pointerEvents: 'none',
+                zIndex: 1,
+                whiteSpace: 'nowrap'
+              }}>
+                PAYÉ
+              </div>
+            )}
             {/* Header Row */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px', borderBottom: '2px solid #1e40af', paddingBottom: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
