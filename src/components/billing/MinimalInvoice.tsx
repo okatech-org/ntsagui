@@ -21,12 +21,13 @@ interface InvoiceItem {
 
 const COMPANY_INFO = {
   name: "OKA TECH",
-  address: "50 Avenue des Champs-Élysées",
-  city: "75008 Paris",
-  country: "France",
-  phone: "+33 6 61 00 26 16",
+  address: "Quartier Ambowé, derrière station TOTAL",
+  city: "Libreville",
+  country: "Gabon",
+  phone: "+241 77 51 14 85",
   email: "admin@okatech.fr",
-  vat: "FR56988507356"
+  rccm: "GA-LBV-01-2024-B17-00123",
+  nif: "2024 0501 6789 T"
 };
 
 const formatCurrency = (amount: number, currency = 'USD') => {
@@ -393,10 +394,11 @@ export function MinimalInvoice() {
                   <div>
                     <p className="font-semibold text-gray-900 mb-2">{COMPANY_INFO.name}</p>
                     <p className="text-gray-600">{COMPANY_INFO.address}</p>
-                    <p className="text-gray-600">{COMPANY_INFO.city}</p>
-                    <p className="text-gray-600">{COMPANY_INFO.country}</p>
+                    <p className="text-gray-600">{COMPANY_INFO.city}, {COMPANY_INFO.country}</p>
                     <p className="text-gray-600">{COMPANY_INFO.phone}</p>
                     <p className="text-gray-600">{COMPANY_INFO.email}</p>
+                    <p className="text-gray-500 text-xs mt-2">RCCM: {COMPANY_INFO.rccm}</p>
+                    <p className="text-gray-500 text-xs">NIF: {COMPANY_INFO.nif}</p>
                   </div>
                   {client && (
                     <div>
