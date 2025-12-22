@@ -8,12 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, Save, FileDown, Eye, EyeOff, GripVertical, Package, Calculator } from "lucide-react";
+import { Plus, Trash2, Save, FileDown, Eye, EyeOff, GripVertical, Package, Calculator, Share2, Link, Copy, Check } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import logoNtsagui from "@/assets/logo-ntsagui.png";
 import tamponNtsagui from "@/assets/tampon-ntsagui.png";
 import { motion, AnimatePresence } from "framer-motion";
+import { QRCodeSVG } from "qrcode.react";
 
 interface InvoiceItem {
   productId: string;
@@ -66,6 +67,8 @@ export function MinimalInvoice() {
   const [notes, setNotes] = useState('');
   const [currency, setCurrency] = useState('XAF');
   const [showPreview, setShowPreview] = useState(true);
+  const [savedDocumentToken, setSavedDocumentToken] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
@@ -118,7 +121,7 @@ export function MinimalInvoice() {
       const client = clients.find(c => c.id === selectedClient);
       if (!client) throw new Error('Client non sélectionné');
 
-      const { error } = await supabase.from('billing_documents').insert([{
+      const { data, error } = await supabase.from('billing_documents').insert([{
         type: 'facture',
         number: invoiceNumber,
         date: issueDate,
@@ -126,16 +129,19 @@ export function MinimalInvoice() {
         client_name: client.name,
         items: items as any,
         subtotal: calculateTotal(),
-        total: calculateTotal(),
+        total: getTotalTTC(),
         notes,
         payment_due_date: dueDate
-      }]);
+      }]).select('public_token').single();
       if (error) throw error;
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['billing-documents'] });
       toast.success('Facture enregistrée avec succès !');
-      resetForm();
+      if (data?.public_token) {
+        setSavedDocumentToken(data.public_token);
+      }
     },
     onError: () => toast.error("Erreur lors de l'enregistrement")
   });
@@ -195,6 +201,38 @@ export function MinimalInvoice() {
     setIssueDate(new Date().toISOString().split('T')[0]);
     setDueDate(new Date().toISOString().split('T')[0]);
     setNotes('');
+    setSavedDocumentToken(null);
+    setLinkCopied(false);
+  };
+
+  const getPublicInvoiceUrl = (token: string) => {
+    return `${window.location.origin}/invoice/${token}`;
+  };
+
+  const copyLink = async () => {
+    if (!savedDocumentToken) return;
+    const url = getPublicInvoiceUrl(savedDocumentToken);
+    await navigator.clipboard.writeText(url);
+    setLinkCopied(true);
+    toast.success('Lien copié !');
+    setTimeout(() => setLinkCopied(false), 3000);
+  };
+
+  const shareViaWhatsApp = () => {
+    if (!savedDocumentToken) return;
+    const url = getPublicInvoiceUrl(savedDocumentToken);
+    const client = getSelectedClient();
+    const message = `Bonjour ${client?.contact_name || client?.name || ''},\n\nVeuillez trouver ci-joint votre facture N° ${invoiceNumber}.\n\nConsultez et confirmez votre paiement ici : ${url}\n\nCordialement,\nNTSAGUI Digital`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+  };
+
+  const shareViaEmail = () => {
+    if (!savedDocumentToken) return;
+    const url = getPublicInvoiceUrl(savedDocumentToken);
+    const client = getSelectedClient();
+    const subject = `Facture N° ${invoiceNumber} - NTSAGUI Digital`;
+    const body = `Bonjour ${client?.contact_name || client?.name || ''},\n\nVeuillez trouver ci-joint votre facture N° ${invoiceNumber}.\n\nConsultez et confirmez votre paiement ici : ${url}\n\nCordialement,\nNTSAGUI Digital`;
+    window.open(`mailto:${client?.email || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
   };
 
   const handleSave = () => {
@@ -514,6 +552,49 @@ export function MinimalInvoice() {
             </CardContent>
           </Card>
 
+          {/* Share Section - After Save */}
+          {savedDocumentToken && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4"
+            >
+              <Card className="border-green-500 bg-green-50 dark:bg-green-950/20">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2 rounded-full bg-green-100 dark:bg-green-900">
+                      <Check className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-green-700 dark:text-green-400">Facture enregistrée !</h4>
+                      <p className="text-sm text-muted-foreground">Partagez le lien avec votre client</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    <Button onClick={copyLink} variant="outline" size="sm" className="flex-1">
+                      {linkCopied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
+                      {linkCopied ? 'Copié !' : 'Copier le lien'}
+                    </Button>
+                    <Button onClick={shareViaWhatsApp} variant="outline" size="sm" className="flex-1">
+                      <Share2 className="h-4 w-4 mr-2" />
+                      WhatsApp
+                    </Button>
+                    <Button onClick={shareViaEmail} variant="outline" size="sm" className="flex-1">
+                      <Share2 className="h-4 w-4 mr-2" />
+                      Email
+                    </Button>
+                  </div>
+
+                  <div className="mt-3 p-2 bg-white dark:bg-background rounded border text-xs text-muted-foreground break-all">
+                    <Link className="h-3 w-3 inline mr-1" />
+                    {getPublicInvoiceUrl(savedDocumentToken)}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
           {/* Action Buttons - Sticky on Mobile */}
           <div className="sticky bottom-4 z-10 flex gap-3 p-4 -mx-4 bg-gradient-to-t from-background via-background to-transparent">
             <Button
@@ -533,6 +614,15 @@ export function MinimalInvoice() {
               <FileDown className="h-5 w-5 mr-2" />
               <span className="hidden sm:inline">PDF</span>
             </Button>
+            {savedDocumentToken && (
+              <Button
+                onClick={resetForm}
+                variant="ghost"
+                className="h-12 px-4"
+              >
+                Nouvelle facture
+              </Button>
+            )}
           </div>
         </div>
 
@@ -711,6 +801,18 @@ export function MinimalInvoice() {
                               style={{ height: '90px', width: 'auto' }}
                             />
                           </div>
+
+                          {/* QR Code for payment confirmation */}
+                          {savedDocumentToken && (
+                            <div style={{ textAlign: 'center', padding: '6px', backgroundColor: 'white', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                              <QRCodeSVG 
+                                value={getPublicInvoiceUrl(savedDocumentToken)} 
+                                size={65}
+                                level="M"
+                              />
+                              <p style={{ fontSize: '6pt', color: '#64748b', margin: '3px 0 0 0' }}>Scanner pour confirmer</p>
+                            </div>
+                          )}
 
                           {/* Totals Box - Compact */}
                           <div style={{ width: '200px', backgroundColor: '#f8fafc', border: '1px solid #1e40af', borderRadius: '4px', overflow: 'hidden' }}>

@@ -68,6 +68,9 @@ export type Database = {
       billing_documents: {
         Row: {
           amount_paid: number | null
+          client_confirmation_date: string | null
+          client_confirmation_note: string | null
+          client_confirmed_payment: boolean | null
           client_id: string | null
           client_name: string
           created_at: string
@@ -80,6 +83,7 @@ export type Database = {
           payment_due_date: string | null
           payment_notes: string | null
           payment_status: string | null
+          public_token: string | null
           source_document_id: string | null
           status: string | null
           subtotal: number
@@ -90,6 +94,9 @@ export type Database = {
         }
         Insert: {
           amount_paid?: number | null
+          client_confirmation_date?: string | null
+          client_confirmation_note?: string | null
+          client_confirmed_payment?: boolean | null
           client_id?: string | null
           client_name: string
           created_at?: string
@@ -102,6 +109,7 @@ export type Database = {
           payment_due_date?: string | null
           payment_notes?: string | null
           payment_status?: string | null
+          public_token?: string | null
           source_document_id?: string | null
           status?: string | null
           subtotal?: number
@@ -112,6 +120,9 @@ export type Database = {
         }
         Update: {
           amount_paid?: number | null
+          client_confirmation_date?: string | null
+          client_confirmation_note?: string | null
+          client_confirmed_payment?: boolean | null
           client_id?: string | null
           client_name?: string
           created_at?: string
@@ -124,6 +135,7 @@ export type Database = {
           payment_due_date?: string | null
           payment_notes?: string | null
           payment_status?: string | null
+          public_token?: string | null
           source_document_id?: string | null
           status?: string | null
           subtotal?: number
